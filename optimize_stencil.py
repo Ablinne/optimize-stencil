@@ -26,19 +26,6 @@ def _nperrchange(**errchange):
 #2D-Version
 #-------------------------------------------------------------------------------
 @_nperrchange(invalid='ignore')
-def omega_2d(coskappay, coskappax, dx, Y, T, betaxy, betayx, deltax, deltay):
-    Ax = 1- 2*betaxy - 2*deltax + 2*deltax*coskappax + 2*betaxy*coskappay
-    Ay = 1- 2*betayx - 2*deltay + 2*deltay*coskappay + 2*betayx*coskappax
-    sx2 = 0.5*(1 - coskappax) #np.sin(kappax/2)**2
-    sy2 = 0.5*(1 - coskappay) #np.sin(kappay/2)**2
-    omega = (2/(T*dx))*np.arcsin(T*dx*np.sqrt(Ax*sx2/(dx**2) + Ay*sy2/(Y**2 * dx**2)))
-    return omega
-
-def norm_arg_2d(kappax, kappay, coskappay, coskappax, Y, T, betaxy, betayx, deltax, deltay):
-    w = 1
-    k = np.sqrt((kappax)**2 + (kappay/Y)**2)
-    return w*(omega_2d(coskappay, coskappax, 1, Y, T, betaxy, betayx, deltax, deltay) - k)**2
-
 def norm_omega_2d(x, Y, N, kappax, kappay, coskappax, coskappay):
 
     T=x[0]
@@ -46,10 +33,19 @@ def norm_omega_2d(x, Y, N, kappax, kappay, coskappax, coskappay):
     betayx = x[2]
     deltax = x[3]
     deltay = x[4]
-
-    # construct 2-D integrand
-    #-----------------------------------
-    f = norm_arg_2d(kappax, kappay, coskappay, coskappax, Y, T, betaxy, betayx, deltax, deltay)
+    #set dx=1, everything is measured in units of dx
+    dx=1
+    #weight function
+    w=1
+    #omega & k
+    Ax = 1- 2*betaxy - 2*deltax + 2*deltax*coskappax + 2*betaxy*coskappay
+    Ay = 1- 2*betayx - 2*deltay + 2*deltay*coskappay + 2*betayx*coskappax
+    sx2 = 0.5*(1 - coskappax) #np.sin(kappax/2)**2
+    sy2 = 0.5*(1 - coskappay) #np.sin(kappay/2)**2
+    omega = (2/(T*dx))*np.arcsin(T*dx*np.sqrt(Ax*sx2/(dx**2) + Ay*sy2/(Y**2* dx**2)))
+    k = np.sqrt((kappax)**2 + (kappay/Y)**2)
+    #integrand & integration
+    f = w*(omega - k)**2
     F = f.sum()
     F = F*(np.pi/(N-1))*(np.pi/(N-1))
 
