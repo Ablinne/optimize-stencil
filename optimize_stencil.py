@@ -105,25 +105,7 @@ def search_coefficients_2d(N=3, Ngrid_low=100, Ngrid_high=1000, Y=1, deltaxrange
 #3D-Version
 #-------------------------------------------------------------------------------
 @_nperrchange(invalid='ignore')
-def omega_3d(kappax, kappay, kappaz, dx, Y, Z, T, betaxy, betaxz, betayx, betayz, betazx, betazy, deltax, deltay, deltaz):
-    coskappax=np.cos(kappax)
-    coskappay=np.cos(kappay)
-    coskappaz=np.cos(kappaz)
-    Ax = 1 - 2*betaxy - 2*betaxz - 2*deltax + 2*deltax*coskappax + 2*betaxy*coskappay + 2*betaxz*coskappaz
-    Ay = 1 - 2*betayx - 2*betayz - 2*deltay + 2*deltay*coskappay + 2*betayx*coskappax + 2*betayz*coskappaz
-    Az = 1 - 2*betazx - 2*betazy - 2*deltaz + 2*deltaz*coskappaz + 2*betazx*coskappax + 2*betazy*coskappay
-    sx2 = 0.5*(1 - coskappax) #np.sin(kappax/2)**2
-    sy2 = 0.5*(1 - coskappay) #np.sin(kappay/2)**2
-    sz2 = 0.5*(1 - coskappaz) #np.sin(kappaz/2)**2
-    omega = (2/(T*dx))*np.arcsin(T*dx*np.sqrt(Ax*sx2/(dx**2) + Ay*sy2/(Y**2 * dx**2) + Az*sz2/(Z**2 * dx**2)))
-    return omega
-
-def norm_arg_3d(kappax, kappay, kappaz, Y, Z, T, betaxy, betaxz, betayx, betayz, betazx, betazy, deltax, deltay, deltaz):
-    w = 1
-    k = np.sqrt((kappax)**2 + (kappay/Y)**2 + (kappaz/Z)**2)
-    return w*(omega_3d(kappax, kappay, kappaz, 1, Y, Z, T, betaxy, betaxz, betayx, betayz, betazx, betazy, deltax, deltay, deltaz) - k)**2
-
-def norm_omega_3d(x, Y, Z, N):
+def norm_omega_3d(x, Y, Z, N, kappax, kappay, kappaz, coskappax, coskappay, coskappaz):
 
     T=x[0]
     betaxy = x[1]
@@ -135,30 +117,40 @@ def norm_omega_3d(x, Y, Z, N):
     deltax = x[7]
     deltay = x[8]
     deltaz = x[9]
-
-    # construct f(x,y,z) for given limits
-    #-----------------------------------
-    x = np.linspace(0, np.pi, N)
-    y = np.linspace(0, np.pi, N)
-    z = np.linspace(0, np.pi, N)
-    kappax, kappay, kappaz = np.meshgrid(x, y, z)
-
-    Nx, Ny, Nz = kappax.shape
-    # construct 3-D integrand
-    #-----------------------------------
-    f = norm_arg_3d(kappax, kappay, kappaz, Y, Z, T, betaxy, betaxz, betayx, betayz, betazx, betazy, deltax, deltay, deltaz)
+    #set dx=1, everything is measured in units of dx
+    dx=1
+    #weight function
+    w=1
+    #omega & k
+    Ax = 1 - 2*betaxy - 2*betaxz - 2*deltax + 2*deltax*coskappax +2*betaxy*coskappay + 2*betaxz*coskappaz
+    Ay = 1 - 2*betayx - 2*betayz - 2*deltay + 2*deltay*coskappay +2*betayx*coskappax + 2*betayz*coskappaz
+    Az = 1 - 2*betazx - 2*betazy - 2*deltaz + 2*deltaz*coskappaz +2*betazx*coskappax + 2*betazy*coskappay
+    sx2 = 0.5*(1 - coskappax) #np.sin(kappax/2)**2
+    sy2 = 0.5*(1 - coskappay) #np.sin(kappay/2)**2
+    sz2 = 0.5*(1 - coskappaz) #np.sin(kappaz/2)**2
+    omega = (2/(T*dx))*np.arcsin(T*dx*np.sqrt(Ax*sx2/(dx**2) + Ay*sy2/(Y**2* dx**2) + Az*sz2/(Z**2 * dx**2)))
+    #integrand & integration
+    k = np.sqrt((kappax)**2 + (kappay/Y)**2 + (kappaz/Z)**2)
+    f = w*(omega - k)**2
     F = f.sum()
-    F = F*(np.pi/(Nx-1))*(np.pi/(Ny-1))*(np.pi/(Nz-1))
+    F = F*(np.pi/(N-1))*(np.pi/(N-1))*(np.pi/(N-1))
 
     return F
 
-def optimize_coefficients_3d(T , betaxy, betaxz, betayx, betayz, betazx, betazy, deltax, deltay, deltaz, Y=1, Z=1, Ngrid=100):
-            y, norm, _, _, _ = scop.fmin(norm_omega_3d, [T , betaxy, betaxz, betayx, betayz, betazx, betazy, deltax, deltay, deltaz], disp=False, full_output=True, args=(Y, Z, Ngrid))
+def optimize_coefficients_3d(kappax, kappay, kappaz, coskappax, coskappay, coskappaz, T , betaxy, betaxz, betayx, betayz, betazx, betazy, deltax, deltay, deltaz, Y=1, Z=1, Ngrid=100):
+            y, norm, _, _, _ = scop.fmin(norm_omega_3d, [T , betaxy, betaxz, betayx, betayz, betazx, betazy, deltax, deltay, deltaz], disp=False, full_output=True, args=(Y, Z, Ngrid, kappax, kappay, kappaz, coskappax, coskappay, coskappaz))
             return [*y, norm]
 
 def search_coefficients_3d(N=3, Ngrid_low=100, Ngrid_high=1000, Y=1, Z=1, deltaxrange=[-1,1], deltayrange=[-1,1], deltazrange=[-1,1], betaxyrange=[-1,1], betaxzrange=[-1,1], betayxrange=[-1,1], betayzrange=[-1,1], betazxrange=[-1,1], betazyrange=[-1,1], Trange=[0.1,1]):
     #fill return vector with yee values
-    x=[0.65,0,0,0,0,0,0,0,0,0,norm_omega_3d([0.65, 0,0,0,0,0,0,0,0,0], Y, Z, Ngrid_high)]
+    x1 = np.linspace(0, np.pi, Ngrid_high)
+    x2 = np.linspace(0, np.pi, Ngrid_high)
+    x3 = np.linspace(0, np.pi, Ngrid_high)
+    kappax, kappay, kappaz = np.meshgrid(x1, x2, x3)
+    coskappax=np.cos(kappax)
+    coskappay=np.cos(kappay)
+    coskappaz=np.cos(kappaz)
+    x=[0.65,0,0,0,0,0,0,0,0,0,norm_omega_3d([0.65, 0,0,0,0,0,0,0,0,0], Y, Z, Ngrid_high, kappax, kappay, kappaz, coskappax, coskappay, coskappaz)]
     #activate progress bar, if possible
     try:
         from tqdm import tqdm
@@ -167,6 +159,22 @@ def search_coefficients_3d(N=3, Ngrid_low=100, Ngrid_high=1000, Y=1, Z=1, deltax
         #if tqdm not available set tqdm to unity
         tqdm = lambda x: x
 
+    #construct kappax, kappay
+    x1 = np.linspace(0, np.pi, Ngrid_low)
+    x2 = np.linspace(0, np.pi, Ngrid_low)
+    x3 = np.linspace(0, np.pi, Ngrid_low)
+    kappax_low, kappay_low, kappaz_low = np.meshgrid(x1, x2, x3)
+    coskappax_low=np.cos(kappax_low)
+    coskappay_low=np.cos(kappay_low)
+    coskappaz_low=np.cos(kappaz_low)
+
+    x1 = np.linspace(0, np.pi, Ngrid_high)
+    x2 = np.linspace(0, np.pi, Ngrid_high)
+    x3 = np.linspace(0, np.pi, Ngrid_high)
+    kappax_high, kappay_high, kappaz_high = np.meshgrid(x1, x2, x3)
+    coskappax_high=np.cos(kappax_high)
+    coskappay_high=np.cos(kappay_high)
+    coskappaz_high=np.cos(kappaz_high)
     #construct tupels to be looped
     ranges = [
         np.linspace(deltayrange[0],deltayrange[1],N),
@@ -182,8 +190,8 @@ def search_coefficients_3d(N=3, Ngrid_low=100, Ngrid_high=1000, Y=1, Z=1, deltax
         ]
     #loop over coefficients and perform simplex
     for deltay, deltax, deltaz, betazy, betazx, betayz, betayx, betaxz, betaxy, T in tqdm(list(itertools.product(*ranges))):
-        y = optimize_coefficients_3d(T , betaxy, betaxz, betayx, betayz, betazx, betazy, deltax, deltay, deltaz, Y, Z, Ngrid_low)
-        norm = norm_omega_3d(y[0:10], Y, Z, Ngrid_high)
+        y = optimize_coefficients_3d(kappax_low, kappay_low, kappaz_low, coskappax_low, coskappay_low, coskappaz_low, T , betaxy, betaxz, betayx, betayz, betazx, betazy, deltax, deltay, deltaz, Y, Z, Ngrid_low)
+        norm = norm_omega_3d(y[0:10], Y, Z, Ngrid_high, kappax_high, kappay_high, kappaz_high, coskappax_high, coskappay_high, coskappaz_high)
         if norm < x[10]:
             x = y
             x[10] = norm
