@@ -1,11 +1,7 @@
 #!/usr/bin/env python3
 # -*- encoding: utf8 -*-
 
-import scipy.integrate as integrate
-from scipy.integrate import dblquad
 import scipy.optimize as scop
-import time
-import numexpr as ne
 import numpy as np
 import argparse
 import itertools
@@ -93,9 +89,7 @@ def search_coefficients_2d(N=3, Ngrid_low=100, Ngrid_high=1000, Y=1, deltaxrange
         ]
     #loop over coefficients and perform simplex
     for deltay ,deltax ,betayx ,betaxy ,T in tqdm(list(itertools.product(*ranges))):
-        #print(deltay, " ", deltax, " ", betayx, " ", betaxy, " ", T )
         y = optimize_coefficients_2d(T , betaxy, betayx, deltax, deltay, Y, Ngrid_low)
-        #y = scop.fmin(norm_omega, [T , betaxy, betayx, deltax, deltay], disp=False, args=(Y, Ngrid_low))
         norm = norm_omega_2d(y[0:5], Y, Ngrid_high)
         if norm < x[5]:
             x = y
