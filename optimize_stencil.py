@@ -53,10 +53,11 @@ def norm_omega_2d(x, Y, N, kappax, kappay, coskappax, coskappay):
 
 def optimize_coefficients_2d(kappax, kappay, coskappax, coskappay, T, betaxy, betayx, deltax, deltay, Y=1, Ngrid=100):
 
-            y, norm, _, _, _ = scop.fmin(norm_omega_2d, [T , betaxy, betayx, deltax, deltay], disp=False, full_output=True, args=(Y, Ngrid, kappax, kappay, coskappax, coskappay))
-            return [*y, norm]
+    y, norm, _, _, _ = scop.fmin(norm_omega_2d, [T , betaxy, betayx, deltax, deltay], disp=False, full_output=True, args=(Y, Ngrid, kappax, kappay, coskappax, coskappay))
+    return [*y, norm]
 
 def search_coefficients_2d(N=3, Ngrid_low=100, Ngrid_high=1000, Y=1, deltaxrange=[-1,1], deltayrange=[-1,1], betaxyrange=[-1,1], betayxrange=[-1,1], Trange=[0.1,1]):
+
     #fill return vector with yee values
     x1 = np.linspace(0, np.pi, Ngrid_high)
     x2 = np.linspace(0, np.pi, Ngrid_high)
@@ -138,10 +139,12 @@ def norm_omega_3d(x, Y, Z, N, kappax, kappay, kappaz, coskappax, coskappay, cosk
     return F
 
 def optimize_coefficients_3d(kappax, kappay, kappaz, coskappax, coskappay, coskappaz, T , betaxy, betaxz, betayx, betayz, betazx, betazy, deltax, deltay, deltaz, Y=1, Z=1, Ngrid=100):
-            y, norm, _, _, _ = scop.fmin(norm_omega_3d, [T , betaxy, betaxz, betayx, betayz, betazx, betazy, deltax, deltay, deltaz], disp=False, full_output=True, args=(Y, Z, Ngrid, kappax, kappay, kappaz, coskappax, coskappay, coskappaz))
-            return [*y, norm]
+
+    y, norm, _, _, _ = scop.fmin(norm_omega_3d, [T , betaxy, betaxz, betayx, betayz, betazx, betazy, deltax, deltay, deltaz], disp=False, full_output=True, args=(Y, Z, Ngrid, kappax, kappay, kappaz, coskappax, coskappay, coskappaz))
+    return [*y, norm]
 
 def search_coefficients_3d(N=3, Ngrid_low=100, Ngrid_high=1000, Y=1, Z=1, deltaxrange=[-1,1], deltayrange=[-1,1], deltazrange=[-1,1], betaxyrange=[-1,1], betaxzrange=[-1,1], betayxrange=[-1,1], betayzrange=[-1,1], betazxrange=[-1,1], betazyrange=[-1,1], Trange=[0.1,1]):
+
     #fill return vector with yee values
     x1 = np.linspace(0, np.pi, Ngrid_high)
     x2 = np.linspace(0, np.pi, Ngrid_high)
@@ -198,6 +201,7 @@ def search_coefficients_3d(N=3, Ngrid_low=100, Ngrid_high=1000, Y=1, Z=1, deltax
     return x
 
 def main():
+    
     #parse the arguments
     parser = argparse.ArgumentParser(description = "This script calculates the optimal coefficients for a FDTD stencil.")
     parser.add_argument("--N", default=3, type=int, help="Number of steps in each coefficient (default: %(default)s).")
