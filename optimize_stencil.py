@@ -26,9 +26,7 @@ def _nperrchange(**errchange):
 #2D-Version
 #-------------------------------------------------------------------------------
 @_nperrchange(invalid='ignore')
-def omega_2d(kappax, kappay, dx, Y, T, betaxy, betayx, deltax, deltay):
-    coskappax=np.cos(kappax)
-    coskappay=np.cos(kappay)
+def omega_2d(coskappay, coskappax, dx, Y, T, betaxy, betayx, deltax, deltay):
     Ax = 1- 2*betaxy - 2*deltax + 2*deltax*coskappax + 2*betaxy*coskappay
     Ay = 1- 2*betayx - 2*deltay + 2*deltay*coskappay + 2*betayx*coskappax
     sx2 = 0.5*(1 - coskappax) #np.sin(kappax/2)**2
@@ -36,12 +34,12 @@ def omega_2d(kappax, kappay, dx, Y, T, betaxy, betayx, deltax, deltay):
     omega = (2/(T*dx))*np.arcsin(T*dx*np.sqrt(Ax*sx2/(dx**2) + Ay*sy2/(Y**2 * dx**2)))
     return omega
 
-def norm_arg_2d(kappax, kappay, Y, T, betaxy, betayx, deltax, deltay):
+def norm_arg_2d(kappax, kappay, coskappay, coskappax, Y, T, betaxy, betayx, deltax, deltay):
     w = 1
     k = np.sqrt((kappax)**2 + (kappay/Y)**2)
-    return w*(omega_2d(kappax, kappay, 1, Y, T, betaxy, betayx, deltax, deltay) - k)**2
+    return w*(omega_2d(coskappay, coskappax, 1, Y, T, betaxy, betayx, deltax, deltay) - k)**2
 
-def norm_omega_2d(x, Y, N):
+def norm_omega_2d(x, Y, N, kappax, kappay, coskappax, coskappay):
 
     T=x[0]
     betaxy = x[1]
@@ -49,28 +47,27 @@ def norm_omega_2d(x, Y, N):
     deltax = x[3]
     deltay = x[4]
 
-    # construct f(x,y) for given limits
-    #-----------------------------------
-    x = np.linspace(0, np.pi, N)
-    y = np.linspace(0, np.pi, N)
-    kappax, kappay = np.meshgrid(x, y)
-
-    Nx, Ny = kappax.shape
     # construct 2-D integrand
     #-----------------------------------
-    f = norm_arg_2d(kappax, kappay, Y, T, betaxy, betayx, deltax, deltay)
+    f = norm_arg_2d(kappax, kappay, coskappay, coskappax, Y, T, betaxy, betayx, deltax, deltay)
     F = f.sum()
-    F = F*(np.pi/(Nx-1))*(np.pi/(Ny-1))
+    F = F*(np.pi/(N-1))*(np.pi/(N-1))
 
     return F
 
-def optimize_coefficients_2d(T , betaxy, betayx, deltax, deltay, Y=1, Ngrid=100):
-            y, norm, _, _, _ = scop.fmin(norm_omega_2d, [T , betaxy, betayx, deltax, deltay], disp=False, full_output=True, args=(Y, Ngrid))
+def optimize_coefficients_2d(kappax, kappay, coskappax, coskappay, T, betaxy, betayx, deltax, deltay, Y=1, Ngrid=100):
+
+            y, norm, _, _, _ = scop.fmin(norm_omega_2d, [T , betaxy, betayx, deltax, deltay], disp=False, full_output=True, args=(Y, Ngrid, kappax, kappay, coskappax, coskappay))
             return [*y, norm]
 
 def search_coefficients_2d(N=3, Ngrid_low=100, Ngrid_high=1000, Y=1, deltaxrange=[-1,1], deltayrange=[-1,1], betaxyrange=[-1,1], betayxrange=[-1,1], Trange=[0.1,1]):
     #fill return vector with yee values
-    x=[0.65,0,0,0,0,norm_omega_2d([0.65, 0, 0, 0, 0], Y, Ngrid_high)]
+    x1 = np.linspace(0, np.pi, Ngrid_high)
+    x2 = np.linspace(0, np.pi, Ngrid_high)
+    kappax, kappay = np.meshgrid(x1, x2)
+    coskappax=np.cos(kappax)
+    coskappay=np.cos(kappay)
+    x=[0.65,0,0,0,0,norm_omega_2d([0.65, 0, 0, 0, 0], Y, Ngrid_high, kappax, kappay, coskappax, coskappay)]
     #activate progress bar, if possible
     try:
         from tqdm import tqdm
@@ -78,6 +75,19 @@ def search_coefficients_2d(N=3, Ngrid_low=100, Ngrid_high=1000, Y=1, deltaxrange
         print('INFORMATION: install tqdm to see a progress bar.')
         #if tqdm not available set tqdm to unity
         tqdm = lambda x: x
+
+    #construct kappax, kappay
+    x1 = np.linspace(0, np.pi, Ngrid_low)
+    x2 = np.linspace(0, np.pi, Ngrid_low)
+    kappax_low, kappay_low = np.meshgrid(x1, x2)
+    coskappax_low=np.cos(kappax_low)
+    coskappay_low=np.cos(kappay_low)
+
+    x1 = np.linspace(0, np.pi, Ngrid_high)
+    x2 = np.linspace(0, np.pi, Ngrid_high)
+    kappax_high, kappay_high = np.meshgrid(x1, x2)
+    coskappax_high=np.cos(kappax_high)
+    coskappay_high=np.cos(kappay_high)
 
     #construct tupels to be looped
     ranges = [
@@ -89,8 +99,8 @@ def search_coefficients_2d(N=3, Ngrid_low=100, Ngrid_high=1000, Y=1, deltaxrange
         ]
     #loop over coefficients and perform simplex
     for deltay ,deltax ,betayx ,betaxy ,T in tqdm(list(itertools.product(*ranges))):
-        y = optimize_coefficients_2d(T , betaxy, betayx, deltax, deltay, Y, Ngrid_low)
-        norm = norm_omega_2d(y[0:5], Y, Ngrid_high)
+        y = optimize_coefficients_2d(kappax_low, kappay_low, coskappax_low, coskappay_low, T , betaxy, betayx, deltax, deltay, Y, Ngrid_low)
+        norm = norm_omega_2d(y[0:5], Y, Ngrid_high, kappax_high, kappay_high, coskappax_high, coskappay_high)
         if norm < x[5]:
             x = y
             x[5] = norm
