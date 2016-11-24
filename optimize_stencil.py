@@ -56,7 +56,7 @@ def optimize_coefficients_2d(kappax, kappay, coskappax, coskappay, T, betaxy, be
     y, norm, _, _, _ = scop.fmin(norm_omega_2d, [T , betaxy, betayx, deltax, deltay], disp=False, full_output=True, args=(Y, Ngrid, kappax, kappay, coskappax, coskappay))
     return [*y, norm]
 
-def search_coefficients_2d(N=3, Ngrid_low=100, Ngrid_high=1000, Y=1, deltaxrange=[-1,1], deltayrange=[-1,1], betaxyrange=[-1,1], betayxrange=[-1,1], Trange=[0.1,1]):
+def search_coefficients_2d(N=3, Ngrid_low=100, Ngrid_high=1000, Y=1, deltaxrange=[-1,1], deltayrange=[-1,1], betaxyrange=[-1,1], betayxrange=[-1,1], Trange=[0.1,1], part=[1,1]):
 
     #fill return vector with yee values
     x1 = np.linspace(0, np.pi, Ngrid_high)
@@ -95,7 +95,9 @@ def search_coefficients_2d(N=3, Ngrid_low=100, Ngrid_high=1000, Y=1, deltaxrange
         np.linspace(Trange[0],Trange[1],N)
         ]
     #loop over coefficients and perform simplex
-    for deltay ,deltax ,betayx ,betaxy ,T in tqdm(list(itertools.product(*ranges))):
+    l = len(list(itertools.product(*ranges)))
+    looplist = list(itertools.product(*ranges))[(part[0]-1)*l//part[1]:part[0]*l//part[1]]
+    for deltay ,deltax ,betayx ,betaxy ,T in tqdm(looplist):
         y = optimize_coefficients_2d(kappax_low, kappay_low, coskappax_low, coskappay_low, T , betaxy, betayx, deltax, deltay, Y, Ngrid_low)
         norm = norm_omega_2d(y[0:5], Y, Ngrid_high, kappax_high, kappay_high, coskappax_high, coskappay_high)
         if norm < x[5]:
@@ -143,7 +145,7 @@ def optimize_coefficients_3d(kappax, kappay, kappaz, coskappax, coskappay, coska
     y, norm, _, _, _ = scop.fmin(norm_omega_3d, [T , betaxy, betaxz, betayx, betayz, betazx, betazy, deltax, deltay, deltaz], disp=False, full_output=True, args=(Y, Z, Ngrid, kappax, kappay, kappaz, coskappax, coskappay, coskappaz))
     return [*y, norm]
 
-def search_coefficients_3d(N=3, Ngrid_low=100, Ngrid_high=1000, Y=1, Z=1, deltaxrange=[-1,1], deltayrange=[-1,1], deltazrange=[-1,1], betaxyrange=[-1,1], betaxzrange=[-1,1], betayxrange=[-1,1], betayzrange=[-1,1], betazxrange=[-1,1], betazyrange=[-1,1], Trange=[0.1,1]):
+def search_coefficients_3d(N=3, Ngrid_low=100, Ngrid_high=1000, Y=1, Z=1, deltaxrange=[-1,1], deltayrange=[-1,1], deltazrange=[-1,1], betaxyrange=[-1,1], betaxzrange=[-1,1], betayxrange=[-1,1], betayzrange=[-1,1], betazxrange=[-1,1], betazyrange=[-1,1], Trange=[0.1,1], part=[1,1]):
 
     #fill return vector with yee values
     x1 = np.linspace(0, np.pi, Ngrid_high)
@@ -192,7 +194,9 @@ def search_coefficients_3d(N=3, Ngrid_low=100, Ngrid_high=1000, Y=1, Z=1, deltax
         np.linspace(Trange[0],Trange[1],N)
         ]
     #loop over coefficients and perform simplex
-    for deltay, deltax, deltaz, betazy, betazx, betayz, betayx, betaxz, betaxy, T in tqdm(list(itertools.product(*ranges))):
+    l = len(list(itertools.product(*ranges)))
+    looplist = list(itertools.product(*ranges))[(part[0]-1)*l//part[1]:part[0]*l//part[1]]
+    for deltay, deltax, deltaz, betazy, betazx, betayz, betayx, betaxz, betaxy, T in tqdm(looplist):
         y = optimize_coefficients_3d(kappax_low, kappay_low, kappaz_low, coskappax_low, coskappay_low, coskappaz_low, T , betaxy, betaxz, betayx, betayz, betazx, betazy, deltax, deltay, deltaz, Y, Z, Ngrid_low)
         norm = norm_omega_3d(y[0:10], Y, Z, Ngrid_high, kappax_high, kappay_high, kappaz_high, coskappax_high, coskappay_high, coskappaz_high)
         if norm < x[10]:
@@ -201,7 +205,7 @@ def search_coefficients_3d(N=3, Ngrid_low=100, Ngrid_high=1000, Y=1, Z=1, deltax
     return x
 
 def main():
-    
+
     #parse the arguments
     parser = argparse.ArgumentParser(description = "This script calculates the optimal coefficients for a FDTD stencil.")
     parser.add_argument("--N", default=3, type=int, help="Number of steps in each coefficient (default: %(default)s).")
@@ -220,14 +224,17 @@ def main():
     parser.add_argument("--betazxrange", default=[-1,1], nargs=2, type = float, metavar=('min', 'max'), help="Range of betazx (default: %(default)s).")
     parser.add_argument("--betazyrange", default=[-1,1], nargs=2, type = float, metavar=('min', 'max'), help="Range of betazy (default: %(default)s).")
     parser.add_argument("--Trange", default=[0.1,1], nargs=2, type = float, metavar=('min', 'max'), help="Range of T=dt/dx (default: %(default)s).")
+    parser.add_argument("--part", default=[1,1], nargs=2, type=int, metavar=("i", "n"), help="Only perform part i of a total of n parts, this is useful for a parallelization without the need to communicate between the different kernels (default: %(default)s).")
     args = parser.parse_args()
     print(args)
 
     if args.dim==2:
-        x = search_coefficients_2d(N=args.N, Ngrid_low=args.Ngrid_low, Ngrid_high=args.Ngrid_high, Y=args.Y, deltaxrange=args.deltaxrange, deltayrange=args.deltayrange, betaxyrange=args.betaxyrange, betayxrange=args.betayxrange, Trange=args.Trange)
+        x = search_coefficients_2d(N=args.N, Ngrid_low=args.Ngrid_low, Ngrid_high=args.Ngrid_high, Y=args.Y, deltaxrange=args.deltaxrange, deltayrange=args.deltayrange, betaxyrange=args.betaxyrange, betayxrange=args.betayxrange, Trange=args.Trange, part=args.part)
+        print("norm=", x[-1], "\n")
         print("T=", x[0],"*dx/c", "\nbetaxy=", x[1], "\nbetayx=", x[2], "\ndeltax=", x[3], "\ndeltay=", x[4])
     if args.dim==3:
-        x = search_coefficients_3d(N=args.N, Ngrid_low=args.Ngrid_low, Ngrid_high=args.Ngrid_high, Y=args.Y, Z=args.Z, deltaxrange=args.deltaxrange, deltayrange=args.deltayrange, deltazrange=args.deltazrange, betaxyrange=args.betaxyrange, betaxzrange=args.betaxzrange, betayxrange=args.betayxrange, betayzrange=args.betayzrange, betazxrange=args.betazxrange, betazyrange=args.betazyrange, Trange=args.Trange)
+        x = search_coefficients_3d(N=args.N, Ngrid_low=args.Ngrid_low, Ngrid_high=args.Ngrid_high, Y=args.Y, Z=args.Z, deltaxrange=args.deltaxrange, deltayrange=args.deltayrange, deltazrange=args.deltazrange, betaxyrange=args.betaxyrange, betaxzrange=args.betaxzrange, betayxrange=args.betayxrange, betayzrange=args.betayzrange, betazxrange=args.betazxrange, betazyrange=args.betazyrange, Trange=args.Trange, part=args.part)
+        print("norm=", x[-1], "\n")
         print("T=", x[0], "\nbetaxy=", x[1], "\nbetaxz=", x[2], "\nbetayx=", x[3], "\nbetayz=", x[4], "\nbetazx=", x[5], "\nbetazy=", x[6], "\ndeltax=", x[7], "\ndeltay=", x[8], "\ndeltaz=", x[9])
 
 if __name__ == "__main__":
