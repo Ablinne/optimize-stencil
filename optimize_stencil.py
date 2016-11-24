@@ -225,17 +225,32 @@ def main():
     parser.add_argument("--betazyrange", default=[-1,1], nargs=2, type = float, metavar=('min', 'max'), help="Range of betazy (default: %(default)s).")
     parser.add_argument("--Trange", default=[0.1,1], nargs=2, type = float, metavar=('min', 'max'), help="Range of T=dt/dx (default: %(default)s).")
     parser.add_argument("--part", default=[1,1], nargs=2, type=int, metavar=("i", "n"), help="Only perform part i of a total of n parts, this is useful for a parallelization without the need to communicate between the different kernels (default: %(default)s).")
+    parser.add_argument("--output", default="standard", choices=["standard", "array", "epoch"], help="Output format, 'standard' prints a list of the named coefficients, 'array' prints the returned array x as it is with [T, beta{xyz}{xyz}, delta{xyz}, norm] and 'epoch' prints it compatible with the input decks of the EPOCH-Code.")
     args = parser.parse_args()
     print(args)
 
     if args.dim==2:
         x = search_coefficients_2d(N=args.N, Ngrid_low=args.Ngrid_low, Ngrid_high=args.Ngrid_high, Y=args.Y, deltaxrange=args.deltaxrange, deltayrange=args.deltayrange, betaxyrange=args.betaxyrange, betayxrange=args.betayxrange, Trange=args.Trange, part=args.part)
-        print("norm=", x[-1], "\n")
-        print("T=", x[0],"*dx/c", "\nbetaxy=", x[1], "\nbetayx=", x[2], "\ndeltax=", x[3], "\ndeltay=", x[4])
+        if(args.output=='standard'):
+            print("norm=", x[-1], "\n")
+            print("T=", x[0],"*dx/c", "\nbetaxy=", x[1], "\nbetayx=", x[2], "\ndeltax=", x[3], "\ndeltay=", x[4])
+        if(args.output=='array'):
+            print(x)
+        if(args.output=='epoch'):
+            print("norm=", x[-1], "\n")
+            print("\tmaxwell_solver=free")
+            print("\tstencil_dt=", x[0],"*dx/c", "\n\tstencil_betaxy=", x[1], "\n\tstencil_betayx=", x[2], "\n\tstencil_deltax=", x[3], "\n\tstencil_deltay=", x[4])
     if args.dim==3:
         x = search_coefficients_3d(N=args.N, Ngrid_low=args.Ngrid_low, Ngrid_high=args.Ngrid_high, Y=args.Y, Z=args.Z, deltaxrange=args.deltaxrange, deltayrange=args.deltayrange, deltazrange=args.deltazrange, betaxyrange=args.betaxyrange, betaxzrange=args.betaxzrange, betayxrange=args.betayxrange, betayzrange=args.betayzrange, betazxrange=args.betazxrange, betazyrange=args.betazyrange, Trange=args.Trange, part=args.part)
-        print("norm=", x[-1], "\n")
-        print("T=", x[0], "\nbetaxy=", x[1], "\nbetaxz=", x[2], "\nbetayx=", x[3], "\nbetayz=", x[4], "\nbetazx=", x[5], "\nbetazy=", x[6], "\ndeltax=", x[7], "\ndeltay=", x[8], "\ndeltaz=", x[9])
+        if(args.output=='standard'):
+            print("norm=", x[-1], "\n")
+            print("T=", x[0], "\nbetaxy=", x[1], "\nbetaxz=", x[2], "\nbetayx=", x[3], "\nbetayz=", x[4], "\nbetazx=", x[5], "\nbetazy=", x[6], "\ndeltax=", x[7], "\ndeltay=", x[8], "\ndeltaz=", x[9])
+        if(args.output=='array'):
+            print(x)
+        if(args.output=='epoch'):
+            print("norm=", x[-1], "\n")
+            print("\tmaxwell_solver=free")
+            print("\tstencil_dt=", x[0], "\n\tstencil_betaxy=", x[1], "\n\tstencil_betaxz=", x[2], "\n\tstencil_betayx=", x[3], "\n\tstencil_betayz=", x[4], "\n\tstencil_betazx=", x[5], "\n\tstencil_betazy=", x[6], "\n\tstencil_deltax=", x[7], "\n\tstencil_deltay=", x[8], "\n\tstencil_deltaz=", x[9])
 
 if __name__ == "__main__":
     main()
