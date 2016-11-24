@@ -155,7 +155,7 @@ def search_coefficients_3d(N=3, Ngrid_low=100, Ngrid_high=1000, Y=1, Z=1, deltax
     coskappax=np.cos(kappax)
     coskappay=np.cos(kappay)
     coskappaz=np.cos(kappaz)
-    x=[0.65,0,0,0,0,0,0,0,0,0,norm_omega_3d([0.65, 0,0,0,0,0,0,0,0,0], Y, Z, Ngrid_high, kappax, kappay, kappaz, coskappax, coskappay, coskappaz)]
+    x=[0.55,0,0,0,0,0,0,0,0,0,norm_omega_3d([0.55, 0,0,0,0,0,0,0,0,0], Y, Z, Ngrid_high, kappax, kappay, kappaz, coskappax, coskappay, coskappaz)]
     #activate progress bar, if possible
     try:
         from tqdm import tqdm
