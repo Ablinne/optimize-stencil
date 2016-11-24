@@ -64,7 +64,7 @@ def search_coefficients_2d(N=3, Ngrid_low=100, Ngrid_high=1000, Y=1, deltaxrange
     kappax, kappay = np.meshgrid(x1, x2)
     coskappax=np.cos(kappax)
     coskappay=np.cos(kappay)
-    x=[0.65,0,0,0,0,norm_omega_2d([0.65, 0, 0, 0, 0], Y, Ngrid_high, kappax, kappay, coskappax, coskappay)]
+    x=[0.95*Y/np.sqrt(1+Y**2),0,0,0,0,norm_omega_2d([0.95*Y/np.sqrt(1+Y**2), 0, 0, 0, 0], Y, Ngrid_high, kappax, kappay, coskappax, coskappay)]
     #activate progress bar, if possible
     try:
         from tqdm import tqdm
@@ -155,7 +155,7 @@ def search_coefficients_3d(N=3, Ngrid_low=100, Ngrid_high=1000, Y=1, Z=1, deltax
     coskappax=np.cos(kappax)
     coskappay=np.cos(kappay)
     coskappaz=np.cos(kappaz)
-    x=[0.55,0,0,0,0,0,0,0,0,0,norm_omega_3d([0.55, 0,0,0,0,0,0,0,0,0], Y, Z, Ngrid_high, kappax, kappay, kappaz, coskappax, coskappay, coskappaz)]
+    x=[0.95*Y*Z/np.sqrt(Y*Y + Y*Y*Z*Z + Z*Z),0,0,0,0,0,0,0,0,0,norm_omega_3d([0.95*Y*Z/np.sqrt(Y*Y + Y*Y*Z*Z + Z*Z), 0,0,0,0,0,0,0,0,0], Y, Z, Ngrid_high, kappax, kappay, kappaz, coskappax, coskappay, coskappaz)]
     #activate progress bar, if possible
     try:
         from tqdm import tqdm
@@ -212,8 +212,8 @@ def main():
     parser.add_argument("--Ngrid_low", default=100, type=int, help="Gridsize for the fast calculation of the norm in the simplex algorithm (default: %(default)s).")
     parser.add_argument("--Ngrid_high", default=1000, type=int, help="Gridsize for the accurate norm calculation after simplex  run (default: %(default)s).")
     parser.add_argument("--dim", default=2, type=int, choices=[2,3], help="Dimension of the stencil to be optimized (default: %(default)s).")
-    parser.add_argument("--Y", default=1, help="Grid aspect ratio dy/dx (default: %(default)s).")
-    parser.add_argument("--Z", default=1, help="Grid aspect ratio dz/dx (default: %(default)s).")
+    parser.add_argument("--Y", default=1, type=float, help="Grid aspect ratio dy/dx (default: %(default)s).")
+    parser.add_argument("--Z", default=1, type=float, help="Grid aspect ratio dz/dx (default: %(default)s).")
     parser.add_argument("--deltaxrange", default=[-1,1], nargs=2, type = float, metavar=('min', 'max'), help="Range of deltax (default: %(default)s).")
     parser.add_argument("--deltayrange", default=[-1,1], nargs=2, type = float, metavar=('min', 'max'), help="Range of deltay (default: %(default)s).")
     parser.add_argument("--deltazrange", default=[-1,1], nargs=2, type = float, metavar=('min', 'max'), help="Range of deltaz (default: %(default)s).")
