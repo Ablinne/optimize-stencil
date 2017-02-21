@@ -85,9 +85,13 @@ class Optimize:
         if psutil.cpu_count(logical=True) > nproc:
             nproc+=1
 
-        pool = cf.ProcessPoolExecutor(nproc)
+        if self.args.singlecore:
+            mymap = map
+        else:
+            pool = cf.ProcessPoolExecutor(nproc)
+            mymap = pool.map
 
-        for res, norm in pool.map(self._optimize_single, itertools.product(*ranges_betadelta)):
+        for res, norm in mymap(self._optimize_single, itertools.product(*ranges_betadelta)):
             if bestnorm is None or norm < bestnorm:
                 bestnorm = norm
                 bestres = res
