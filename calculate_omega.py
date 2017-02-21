@@ -66,6 +66,8 @@ def main():
                 x[i] = -0.025
 
 
+    print('stencil_ok=', dispersion.stencil_ok(x))
+    print('dt_ok=', dispersion.dt_ok(x))
     fmin = dispersion.norm(x)
     coefficients = stencil.coefficients(x)
     #print(x)

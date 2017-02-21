@@ -105,8 +105,8 @@ class Dispersion(metaclass = ABCMeta):
 
 
     def omega_output(self, fname, parameters):
-        kappa = self.kappa
         omega = self.omega(parameters)
+        kappa = self.kappa
         k = self.k
         columns = [*kappa, k, omega, omega/k]
         np.savetxt(fname, np.vstack(map(np.ravel, columns)).T)
