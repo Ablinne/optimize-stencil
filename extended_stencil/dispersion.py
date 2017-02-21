@@ -65,6 +65,10 @@ class Dispersion(metaclass = ABCMeta):
 
     def dt_ok(self, parameters):
         self.parameters = parameters
+        if np.any(np.isnan(parameters)):
+            # in some weird cases the optimizer goes rogue and feeds me NaNs...
+            return -1.
+
         c = self.coefficients
         stencil_ok = self.stencil_ok(parameters)
         #print('args_ok', args_ok)
@@ -73,7 +77,9 @@ class Dispersion(metaclass = ABCMeta):
             return -1.
         dx = self.dx
         dt_ok = 1.0/np.max(dx*self.sqrtres) - c.dt
-        #print(dt_ok)
+        if np.isnan(dt_ok):
+            raise ValueError("dt_ok got NaN")
+
         return dt_ok
 
     def omega(self, parameters):
@@ -114,14 +120,19 @@ class Dispersion(metaclass = ABCMeta):
 
     def norm(self, parameters):
         #integrand & integration
+        if np.any(np.isnan(parameters)):
+            # in some weird cases the optimizer goes rogue and feeds me NaNs...
+            return 1e6
+
         omega = self.omega(parameters)
         if omega is None:
-            # just make sure we do not return 'nan's
+            # just make sure we do not return 'nan's if constraints are not met
             return 1e6
+
         f = self.w*(omega - self.k)**2
         F = f.sum()
         F = F*(np.pi/(self.N-1))**self.dim
-        #print('F', F)
+
         return F
 
 class Dispersion2D(Dispersion):
@@ -147,6 +158,9 @@ class Dispersion2D(Dispersion):
 
     def stencil_ok(self, parameters):
         self.parameters = parameters
+        if np.any(np.isnan(parameters)):
+            # in some weird cases the optimizer goes rogue and feeds me NaNs...
+            return -1
         c = self.coefficients
 
         a = np.min(self.sqrtarg)
@@ -157,9 +171,14 @@ class Dispersion2D(Dispersion):
                 ]
 
         if not a < 0:
-            return min(b)
+            res = min(b)
         else:
-            return a
+            res = a
+
+        if np.isnan(res):
+            raise ValueError("stencil_ok got NaN")
+
+        return res
 
     @property
     def sqrtarg(self):
@@ -204,6 +223,9 @@ class Dispersion3D(Dispersion):
 
     def stencil_ok(self, parameters):
         self.parameters = parameters
+        if np.any(np.isnan(parameters)):
+            # in some weird cases the optimizer goes rogue and feeds me NaNs...
+            return -1
         c = self.coefficients
 
         a = np.min(self.sqrtarg)
@@ -217,9 +239,14 @@ class Dispersion3D(Dispersion):
              c.alphax - 2.0 * c.betaxy - 2.0 * c.betaxz - c.deltax + (c.alphay - 2.0 * c.betayx - 2.0 * c.betayz - c.deltay)/self.Y**2 + (c.alphaz - 2.0 * c.betazx - 2.0 * c.betazy - c.deltaz)/self.Z**2]
 
         if not a < 0:
-            return min(b)
+            res = min(b)
         else:
-            return a
+            res = a
+
+        if np.isnan(res):
+            raise ValueError("stencil_ok got NaN")
+
+        return res
 
     @property
     def sqrtarg(self):
