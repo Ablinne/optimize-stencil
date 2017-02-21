@@ -2,6 +2,8 @@
 from . import minmax
 
 import numpy as np
+import scipy.interpolate as spinterp
+
 from .stencil import Coefficients2D, Coefficients3D
 
 from abc import ABCMeta, abstractmethod, abstractproperty
@@ -112,9 +114,23 @@ class Dispersion(metaclass = ABCMeta):
 
     def omega_output(self, fname, parameters):
         omega = self.omega(parameters)
-        kappa = self.kappa
+        kappa = self.kappamesh
+        kmesh = self.kmesh
         k = self.k
-        columns = [*kappa, k, omega, omega/k]
+        if omega.ndim == 2:
+            omegaspl = spinterp.RectBivariateSpline(self.kx[:,0], self.ky[0,:], omega)
+            vgx = omegaspl(self.kx[:,0], self.ky[0,:], dy=1)
+            vgy = omegaspl(self.kx[:,0], self.ky[0,:], dx=1)
+            vg = np.sqrt(vgx**2 + vgy**2)
+        if omega.ndim == 3:
+            vgx = np.ones_like(omega)*np.sqrt(1.0/3.0)
+            vgx[:-1, :-1, :-1] = (omega[ 1:, :-1, :-1]-omega[:-1, :-1, :-1])/(k[1,0,0])
+            vgy = np.ones_like(omega)*np.sqrt(1.0/3.0)
+            vgy[:-1, :-1, :-1] = (omega[:-1,  1:, :-1]-omega[:-1, :-1, :-1])/(k[0,1,0])
+            vgz = np.ones_like(omega)*np.sqrt(1.0/3.0)
+            vgz[:-1, :-1, :-1] = (omega[:-1, :-1,  1:]-omega[:-1, :-1, :-1])/(k[0,0,1])
+            vg = np.sqrt(vgx**2 + vgy**2 + vgz**2)
+        columns = [*np.broadcast_arrays(*kappa), k, omega, omega/k, vg]
         np.savetxt(fname, np.vstack(map(np.ravel, columns)).T)
 
 
@@ -147,9 +163,12 @@ class Dispersion2D(Dispersion):
 
     def init2(self):
         x = np.linspace(0, np.pi, self.N)
-        self.kappa = np.meshgrid(x, x)
-        self.kappax, self.kappay = self.kappa
-        self.k = np.sqrt((self.kappax)**2 + (self.kappay/self.Y)**2)
+        self.kappamesh = np.meshgrid(x, x, indexing='ij', sparse=True)
+        self.kappax, self.kappay = self.kappamesh
+        self.kx = self.kappax
+        self.ky = self.kappay/self.Y
+        self.kmesh = self.kx, self.ky
+        self.k = np.sqrt(self.kx**2 + self.ky**2)
         self.coskappax=np.cos(self.kappax)
         self.coskappay=np.cos(self.kappay)
         self.sx2 = 0.5*(1. - self.coskappax) #np.sin(kappax/2)**2
@@ -210,8 +229,14 @@ class Dispersion3D(Dispersion):
 
     def init2(self):
         x = np.linspace(0, np.pi, self.N)
-        self.kappa = np.meshgrid(x, x, x)
-        self.kappax, self.kappay, self.kappaz = self.kappa
+        self.kappamesh = np.meshgrid(x, x, x, indexing='ij', sparse=True)
+        self.kappax, self.kappay, self.kappaz = self.kappamesh
+
+        self.kx = self.kappax
+        self.ky = self.kappay/self.Y
+        self.kz = self.kappaz/self.Z
+        self.kmesh = self.kx, self.ky, self.kz
+
         self.k = np.sqrt((self.kappax)**2 + (self.kappay/self.Y)**2 + (self.kappay/self.Z)**2)
         self.coskappax=np.cos(self.kappax)
         self.coskappay=np.cos(self.kappay)
