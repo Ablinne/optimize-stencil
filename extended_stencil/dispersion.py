@@ -14,11 +14,12 @@ class Dispersion(metaclass = ABCMeta):
     dim = 1
 
     def __init__(self):
-        self._parameters = []
+        self._parameters = None
         self._sqrtarg = None
         self._sqrtres = None
         self._coefficients = None
         self.init2_run = False
+        self.stencil = None
 
     @abstractmethod
     def init2(self):
@@ -32,13 +33,17 @@ class Dispersion(metaclass = ABCMeta):
     def parameters(self, parameters):
         if not self.init2_run:
             self.init2()
+            self.init2_run = True
 
-        if parameters == self._parameters:
+        if self._parameters is not None and np.all(parameters == self._parameters):
+            #print('parameters unchanged', self._parameters, parameters)
             return
 
+        self._parameters = np.array(parameters)
         self._sqrtarg = None
         self._sqrtres = None
         self._coefficients = self.stencil.coefficients(parameters)
+        #print('parameters changed to', self._parameters)
 
     @property
     def coefficients(self):
@@ -50,9 +55,8 @@ class Dispersion(metaclass = ABCMeta):
             self._sqrtres = np.sqrt(self.sqrtarg)
 
         if np.any(np.isnan(self._sqrtres)):
-            print('Got NaNs in sqrt for params', self._parameters, 'stencil_ok', self.stencil_ok(self._parameters))
             print('This Function should not have been called')
-            raise ValueError
+            raise ValueError('Got NaNs in sqrt for params {}, stencil_ok {}'.format(self._parameters, self.stencil_ok(self._parameters)))
         return self._sqrtres
 
     @abstractproperty
@@ -84,7 +88,7 @@ class Dispersion(metaclass = ABCMeta):
 
         dt_ok = self.dt_ok(parameters)
         #print('dt_ok', dt_ok)
-        if dt_ok < 0:
+        if dt_ok < 0 or c.dt < 0:
             #raise ValueError('the dt is too small: {} < {}'.format(np.asscalar(c.dt), np.asscalar(c.dt - dt_ok)))
             return None
 
@@ -144,10 +148,18 @@ class Dispersion2D(Dispersion):
     def stencil_ok(self, parameters):
         self.parameters = parameters
         c = self.coefficients
-        a = (c.alphay+2*c.betayx-c.deltay)/(self.Y**2)
-        b = c.alphax-2*c.betaxy-c.deltax+(c.alphay-2*c.betayx-c.deltay)/(self.Y**2)
-        c = c.alphax+2*c.betaxy-c.deltax
-        return min(a,b,c)
+
+        a = np.min(self.sqrtarg)
+
+        b = [(c.alphay+2*c.betayx-c.deltay)/(self.Y**2),
+                c.alphax-2*c.betaxy-c.deltax+(c.alphay-2*c.betayx-c.deltay)/(self.Y**2),
+                c.alphax+2*c.betaxy-c.deltax
+                ]
+
+        if not a < 0:
+            return min(b)
+        else:
+            return a
 
     @property
     def sqrtarg(self):

@@ -36,7 +36,7 @@ class Optimize:
 
         if self.dim == 2:
             self.dispersion = Dispersion2D(args.Y, args.Ngrid_low, self.stencil)
-            if args.Ngrid_high > args.Ngrid_low:
+            if args.Ngrid_high != args.Ngrid_low:
                 self.dispersion_high = Dispersion2D(args.Y, args.Ngrid_high, self.stencil)
             else:
                 self.dispersion_high = self.dispersion
@@ -44,7 +44,7 @@ class Optimize:
 
         elif self.dim == 3:
             self.dispersion = Dispersion3D(args.Y, args.Z, args.Ngrid_low, self.stencil)
-            if args.Ngrid_high > args.Ngrid_low:
+            if args.Ngrid_high != args.Ngrid_low:
                 self.dispersion_high = Dispersion3D(args.Y, args.Z, args.Ngrid_high, self.stencil)
             else:
                 self.dispersion_high = self.dispersion
@@ -65,8 +65,8 @@ class Optimize:
         if self.dispersion.stencil_ok(x0) < 0:
             return None, float('inf')
 
-        x0[0] = self.dispersion.dt_ok(x0)*0.95
-
+        x0[0] = np.asscalar(self.dispersion.dt_ok(x0)*0.95)
+        print('x0', x0)
         res = scop.minimize(self.dispersion.norm, x0, method='SLSQP', constraints = self.constraints, options = dict(disp=False, iprint = 2))
         norm = self.dispersion_high.norm(res.x)
         print('Started at', x0, 'resulting norm', res.fun, norm)
