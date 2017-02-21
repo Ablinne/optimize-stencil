@@ -69,7 +69,7 @@ class Optimize:
         #print('x0', x0)
         res = scop.minimize(self.dispersion.norm, x0, method='SLSQP', constraints = self.constraints, options = dict(disp=False, iprint = 2))
         norm = self.dispersion_high.norm(res.x)
-        #print('Started at', x0, 'resulting norm', res.fun, norm)
+        print('Started at', x0, 'resulting norm', norm)
         return res, norm
 
     def optimize(self):
