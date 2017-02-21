@@ -94,7 +94,7 @@ class Dispersion(metaclass = ABCMeta):
 
         dt_ok = self.dt_ok(parameters)
         #print('dt_ok', dt_ok)
-        if dt_ok < 0 or c.dt < 0:
+        if dt_ok < 0 or c.dt <= 0:
             #raise ValueError('the dt is too small: {} < {}'.format(np.asscalar(c.dt), np.asscalar(c.dt - dt_ok)))
             return None
 
