@@ -41,9 +41,8 @@ def main():
 
     if args.dim == 2:
         dispersion = Dispersion2D(args.Y, args.Ngrid_high, stencil)
-
-    elif self.dim == 3:
-        dispersion = Dispersion3D(args.Y, args.Z, args.Ngrid_low, stencil)
+    elif args.dim == 3:
+        dispersion = Dispersion3D(args.Y, args.Z, args.Ngrid_high, stencil)
 
     if args.type == "free":
         x = args.params

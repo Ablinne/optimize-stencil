@@ -123,12 +123,22 @@ class Dispersion(metaclass = ABCMeta):
             vgy = omegaspl(self.kx[:,0], self.ky[0,:], dx=1)
             vg = np.sqrt(vgx**2 + vgy**2)
         if omega.ndim == 3:
-            vgx = np.ones_like(omega)*np.sqrt(1.0/3.0)
-            vgx[:-1, :-1, :-1] = (omega[ 1:, :-1, :-1]-omega[:-1, :-1, :-1])/(k[1,0,0])
-            vgy = np.ones_like(omega)*np.sqrt(1.0/3.0)
-            vgy[:-1, :-1, :-1] = (omega[:-1,  1:, :-1]-omega[:-1, :-1, :-1])/(k[0,1,0])
-            vgz = np.ones_like(omega)*np.sqrt(1.0/3.0)
-            vgz[:-1, :-1, :-1] = (omega[:-1, :-1,  1:]-omega[:-1, :-1, :-1])/(k[0,0,1])
+            vgx = np.zeros_like(omega)
+            vgy = np.array(vgx)
+            vgz = np.array(vgx)
+
+            vgx[   0, :, :] =      (omega[ 1, :, :]-omega[  0, :, :])/(k[1,0,0])
+            vgx[  -1, :, :] =      (omega[-1, :, :]-omega[ -1, :, :])/(k[1,0,0])
+            vgx[1:-1, :, :] = 0.5*((omega[2:, :, :]-omega[:-2, :, :])/(k[1,0,0]))
+
+            vgy[:,    0, :] =      (omega[:,  1, :]-omega[:,   0, :])/(k[0,1,0])
+            vgy[:,   -1, :] =      (omega[:, -1, :]-omega[:,  -1, :])/(k[0,1,0])
+            vgy[:, 1:-1, :] = 0.5*((omega[:, 2:, :]-omega[:, :-2, :])/(k[0,1,0]))
+
+            vgz[:, :,    0] =      (omega[:, : , 1]-omega[:, :,   0])/(k[0,0,1])
+            vgz[:, :,   -1] =      (omega[:, : ,-1]-omega[:, :,  -1])/(k[0,0,1])
+            vgz[:, :, 1:-1] = 0.5*((omega[:, : ,2:]-omega[:, :, :-2])/(k[0,0,1]))
+
             vg = np.sqrt(vgx**2 + vgy**2 + vgz**2)
         columns = [*np.broadcast_arrays(*kappa), k, omega, omega/k, vg]
         np.savetxt(fname, np.vstack(map(np.ravel, columns)).T)
@@ -237,7 +247,7 @@ class Dispersion3D(Dispersion):
         self.kz = self.kappaz/self.Z
         self.kmesh = self.kx, self.ky, self.kz
 
-        self.k = np.sqrt((self.kappax)**2 + (self.kappay/self.Y)**2 + (self.kappay/self.Z)**2)
+        self.k = np.sqrt((self.kappax)**2 + (self.kappay/self.Y)**2 + (self.kappaz/self.Z)**2)
         self.coskappax=np.cos(self.kappax)
         self.coskappay=np.cos(self.kappay)
         self.coskappaz=np.cos(self.kappaz)
