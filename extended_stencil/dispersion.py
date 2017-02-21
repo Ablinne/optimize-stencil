@@ -41,6 +41,7 @@ class Dispersion(metaclass = ABCMeta):
             #print('parameters unchanged', self._parameters, parameters)
             return
 
+        # make sure we COPY the parameters! (np.array does that!)
         self._parameters = np.array(parameters)
         self._sqrtarg = None
         self._sqrtres = None
@@ -73,12 +74,14 @@ class Dispersion(metaclass = ABCMeta):
 
         c = self.coefficients
         stencil_ok = self.stencil_ok(parameters)
-        #print('args_ok', args_ok)
+
         if stencil_ok < 0:
-            #raise ValueError('the delta are too big')
-            return -1.
+            # these parameters are outside of the constraints
+            return stencil_ok
+
         dx = self.dx
         dt_ok = 1.0/np.max(dx*self.sqrtres) - c.dt
+
         if np.isnan(dt_ok):
             raise ValueError("dt_ok got NaN")
 
@@ -87,20 +90,21 @@ class Dispersion(metaclass = ABCMeta):
     def omega(self, parameters):
         self.parameters = parameters
         c = self.coefficients
-        #print('omega called with', c)
+
         stencil_ok = self.stencil_ok(parameters)
-        #print('args_ok', args_ok)
+
         if stencil_ok < 0:
-            #raise ValueError('the delta are too big')
+            # these parameters are outside of the constraints
             return None
 
         dt_ok = self.dt_ok(parameters)
-        #print('dt_ok', dt_ok)
+
         if dt_ok < 0 or c.dt <= 0:
-            #raise ValueError('the dt is too small: {} < {}'.format(np.asscalar(c.dt), np.asscalar(c.dt - dt_ok)))
+            # these parameters are outside of the constraints
             return None
 
         dt = c.dt
+
         #set dx=1, everything is measured in units of dx
         dx = self.dx
 
@@ -145,7 +149,6 @@ class Dispersion(metaclass = ABCMeta):
 
 
     def norm(self, parameters):
-        #integrand & integration
         if np.any(np.isnan(parameters)):
             # in some weird cases the optimizer goes rogue and feeds me NaNs...
             return 1e6
@@ -155,6 +158,7 @@ class Dispersion(metaclass = ABCMeta):
             # just make sure we do not return 'nan's if constraints are not met
             return 1e6
 
+        #integrand & integration
         f = self.w*(omega - self.k)**2
         F = f.sum()
         F = F*(np.pi/(self.N-1))**self.dim
@@ -190,6 +194,7 @@ class Dispersion2D(Dispersion):
         if np.any(np.isnan(parameters)):
             # in some weird cases the optimizer goes rogue and feeds me NaNs...
             return -1
+
         c = self.coefficients
 
         a = np.min(self.sqrtarg)
@@ -215,12 +220,9 @@ class Dispersion2D(Dispersion):
             c = self.coefficients
             #set dx=1, everything is measured in units of dx
             dx = self.dx
-            #print(c)
-            #print(self.coskappax)
+
             Ax = c.alphax + c.deltax*(1.0 + 2.0*self.coskappax) +2.*c.betaxy*self.coskappay
-            #print(minmax(Ax))
             Ay = c.alphay + c.deltay*(1.0 + 2.0*self.coskappay) +2.*c.betayx*self.coskappax
-            #print(minmax(Ay))
 
             self._sqrtarg = Ax*self.sx2/(dx**2) + Ay*self.sy2/((self.Y * dx)**2)
         return self._sqrtarg

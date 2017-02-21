@@ -10,5 +10,5 @@ setup(name='OptimizeStencil',
       author_email='alexander@blinne.net',
       url='',
       packages=['extended_stencil'],
-      scripts=['']
+      scripts=['optimize_stencil.py', 'calculate_omega.py']
      )

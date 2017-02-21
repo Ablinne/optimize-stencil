@@ -13,7 +13,7 @@ from extended_stencil import *
 def main():
 
     parser = argparse.ArgumentParser(description = "This script calculates the optimal coefficients for a FDTD stencil.")
-    parser.add_argument("--Ngrid_high", default=1000, type=int, help="Gridsize for the accurate norm calculation after simplex  run (default: %(default)s).")
+    parser.add_argument("--Ngrid_high", default=200, type=int, help="Gridsize for the accurate norm calculation after simplex  run (default: %(default)s).")
     parser.add_argument("--dim", default=2, type=int, choices=[2,3], help="Dimension of the stencil to be optimized (default: %(default)s).")
     parser.add_argument('--div-free', dest='div_free', action='store_true', help="Constrain the derivative of div B == 0 (default: %(default)s).")
     parser.add_argument('--no-div-free', dest='div_free', action='store_false', help="Constrain the derivative of div B == 0 (default: %(default)s).")
