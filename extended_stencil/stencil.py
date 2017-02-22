@@ -141,6 +141,33 @@ class StencilFixed3D(StencilFree3D):
 Stencil.stencils[StencilDescription(dim=3, div_free=True, symmetric=False)] = StencilFixed3D
 
 
+class StencilSymmetric3D(StencilFree3D):
+    def _fixed_coefficients(self):
+        return super()._fixed_coefficients() + ['betaxy', 'betaxz', 'betayz', 'betazx', 'betazy', 'deltay', 'deltaz']
+
+    def _fill_coefficients(self, c):
+        c.deltay = c.deltax
+        c.deltaz = c.deltax
+        c.betaxz = c.betayx
+        c.betaxy = c.betayx
+        c.betayz = c.betayx
+        c.betazx = c.betayx
+        c.betazy = c.betayx
+        super()._fill_coefficients(c)
+
+Stencil.stencils[StencilDescription(dim=3, div_free=False, symmetric=True)] = StencilSymmetric3D
+
+
+
+class StencilSymmetricFixed3D(StencilFixed3D, StencilSymmetric3D):
+    pass
+
+Stencil.stencils[StencilDescription(dim=3, div_free=True, symmetric=True)] = StencilSymmetricFixed3D
+
+
+
+
+
 def get_stencil(args):
     stencil_desc = StencilDescription(dim=args.dim, div_free=args.div_free, symmetric=args.symmetric)
     if stencil_desc in Stencil.stencils:
