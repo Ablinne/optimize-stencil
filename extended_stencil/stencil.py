@@ -1,4 +1,5 @@
 
+from collections import namedtuple
 from abc import ABCMeta, abstractmethod
 import warnings
 
@@ -30,10 +31,12 @@ class namedarray:
                 a[:] = other
         return a
 
+StencilDescription = namedtuple("StencilDescription", ["dim", "div_free", "symmetric"])
 
 class Stencil(metaclass = ABCMeta):
     Parameters = None
     Coefficients = None
+    stencils = {}
 
     def __init__(self):
         self._parameters = self.Coefficients._fields[:]
@@ -73,6 +76,9 @@ class StencilFree2D(Stencil):
         c.alphay = 1.0 - 2.0 * c.betayx - 3.0 * c.deltay
         super()._fill_coefficients(c)
 
+Stencil.stencils[StencilDescription(dim=2, div_free=False, symmetric=False)] = StencilFree2D
+
+
 class StencilFixed2D(StencilFree2D):
     def _fixed_coefficients(self):
         return super()._fixed_coefficients() + ['betaxy', 'betayx']
@@ -81,6 +87,8 @@ class StencilFixed2D(StencilFree2D):
         c.betaxy = c.deltay
         c.betayx = c.deltax
         super()._fill_coefficients(c)
+
+Stencil.stencils[StencilDescription(dim=2, div_free=True, symmetric=False)] = StencilFixed2D
 
 
 class StencilSymmetric2D(StencilFree2D):
@@ -92,9 +100,14 @@ class StencilSymmetric2D(StencilFree2D):
         c.betaxy = c.betayx
         super()._fill_coefficients(c)
 
+Stencil.stencils[StencilDescription(dim=2, div_free=False, symmetric=True)] = StencilSymmetric2D
+
 
 class StencilSymmetricFixed2D(StencilFixed2D, StencilSymmetric2D):
     pass
+
+Stencil.stencils[StencilDescription(dim=2, div_free=True, symmetric=True)] = StencilSymmetricFixed2D
+
 
 
 class StencilFree3D(Stencil):
@@ -108,6 +121,8 @@ class StencilFree3D(Stencil):
         c.alphay = 1.0 - 2.0 * c.betayx - 2.0 * c.betayz - 3.0 * c.deltay
         c.alphaz = 1.0 - 2.0 * c.betazx - 2.0 * c.betazy - 3.0 * c.deltaz
         super()._fill_coefficients(c)
+
+Stencil.stencils[StencilDescription(dim=3, div_free=False, symmetric=False)] = StencilFree3D
 
 
 class StencilFixed3D(StencilFree3D):
@@ -123,19 +138,12 @@ class StencilFixed3D(StencilFree3D):
         c.betazy = c.deltay
         super()._fill_coefficients(c)
 
+Stencil.stencils[StencilDescription(dim=3, div_free=True, symmetric=False)] = StencilFixed3D
+
+
 def get_stencil(args):
-    if args.dim == 2:
-        stencils = {(False, False): StencilFree2D,
-                    (True, False): StencilFixed2D,
-                    (False, True): StencilSymmetric2D,
-                    (True, True): StencilSymmetricFixed2D}
-        return stencils[args.div_free, args.symmetric]()
+    stencil_desc = StencilDescription(dim=args.dim, div_free=args.div_free, symmetric=args.symmetric)
+    if stencil_desc in Stencil.stencils:
+        return Stencil.stencils[stencil_desc]()
 
-    elif args.dim == 3:
-        stencils = {(False, False): StencilFree3D,
-                    (True, False): StencilFixed3D}
-                    #(False, True): StencilSymmetric3D,
-                    #(True, True): StencilSymmetricFixed3D}
-        return stencils[args.div_free, args.symmetric]()
-
-
+    raise NotImplementedError
