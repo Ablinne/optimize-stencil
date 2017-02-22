@@ -35,7 +35,6 @@ class Dispersion(metaclass = ABCMeta):
     def parameters(self, parameters):
         if not self.init2_run:
             self.init2()
-            self.init2_run = True
 
         if self._parameters is not None and np.all(parameters == self._parameters):
             #print('parameters unchanged', self._parameters, parameters)
@@ -173,6 +172,7 @@ class Dispersion2D(Dispersion):
         self.N = N
         self.stencil = stencil
         self.init2_run = False
+        #self.init2()
 
 
     def init2(self):
@@ -187,6 +187,7 @@ class Dispersion2D(Dispersion):
         self.coskappay=np.cos(self.kappay)
         self.sx2 = 0.5*(1. - self.coskappax) #np.sin(kappax/2)**2
         self.sy2 = 0.5*(1. - self.coskappay) #np.sin(kappay/2)**2
+        self.init2_run = True
 
 
     def stencil_ok(self, parameters):
@@ -238,6 +239,7 @@ class Dispersion3D(Dispersion):
         self.N = N
         self.stencil = stencil
         self.init2_run = False
+        #self.init2()
 
     def init2(self):
         x = np.linspace(0, np.pi, self.N)
@@ -256,6 +258,7 @@ class Dispersion3D(Dispersion):
         self.sx2 = 0.5*(1. - self.coskappax) #np.sin(kappax/2)**2
         self.sy2 = 0.5*(1. - self.coskappay) #np.sin(kappay/2)**2
         self.sz2 = 0.5*(1. - self.coskappaz) #np.sin(kappaz/2)**2
+        self.init2_run = True
 
 
     def stencil_ok(self, parameters):
