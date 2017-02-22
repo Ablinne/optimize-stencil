@@ -30,6 +30,7 @@ class Optimize:
     def __init__(self, args):
         self.args = args
         self.constraints = []
+        self.constraints_high = []
         self.dim = args.dim
         self.div_free = args.div_free
         self.stencil = get_stencil(args)
@@ -53,12 +54,16 @@ class Optimize:
 
         self.constraints.append( dict(type='ineq', fun=self.dispersion.stencil_ok) )
         self.constraints.append( dict(type='ineq', fun=self.dispersion.dt_ok) )
+        self.constraints_high.append( dict(type='ineq', fun=self.dispersion_high.stencil_ok) )
+        self.constraints_high.append( dict(type='ineq', fun=self.dispersion_high.dt_ok) )
 
         for i, fname in enumerate(self.stencil.Parameters._fields):
             bounds = getattr(args, fname+'range')
             #print('constraint', i, fname, bounds)
             self.constraints.append( dict(type='ineq', fun=make_single_min_constraint(i, bounds[0])) )
             self.constraints.append( dict(type='ineq', fun=make_single_max_constraint(i, bounds[1])) )
+            self.constraints_high.append( dict(type='ineq', fun=make_single_min_constraint(i, bounds[0])) )
+            self.constraints_high.append( dict(type='ineq', fun=make_single_max_constraint(i, bounds[1])) )
 
 
     def _optimize_single(self, betadelta):
@@ -69,9 +74,16 @@ class Optimize:
             return None, float('inf')
 
         x0[0] = np.asscalar(stencil_ok*0.95)
+        x0 = np.asfarray(x0)
         #print('x0', x0)
         res = scop.minimize(self.dispersion.norm, x0, method='SLSQP', constraints = self.constraints, options = dict(disp=False, iprint = 2))
         norm = self.dispersion_high.norm(res.x)
+        print('x0={}, x={}, norm={}'.format(x0, res.x, norm))
+        return res, norm
+
+    def _optimize_final(self, x0):
+        res = scop.minimize(self.dispersion_high.norm, x0, method='SLSQP', constraints = self.constraints_high, options = dict(disp=False, iprint = 2))
+        norm = res.fun
         print('x0={}, x={}, norm={}'.format(x0, res.x, norm))
         return res, norm
 
@@ -101,7 +113,9 @@ class Optimize:
                 bestnorm = norm
                 bestres = res
 
-        return bestres.x, bestnorm
+        res, norm = self._optimize_final(bestres.x)
+
+        return res.x, norm
 
     def omega_output(self, fname, x):
         return self.dispersion_high.omega_output(fname, x)
