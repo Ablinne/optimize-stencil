@@ -8,7 +8,8 @@ setup(name='OptimizeStencil',
       description='OptimizeStencil',
       author='Alexander Blinne, David Schinkel',
       author_email='alexander@blinne.net',
-      url='',
+      url='https://git.tpi.uni-jena.de/albn/optimize_stencil',
       packages=['extended_stencil'],
-      scripts=['optimize_stencil.py', 'calculate_omega.py']
+      scripts=['optimize_stencil.py', 'calculate_omega.py'],
+      install_requires=['numpy', 'scipy', 'psutil']
      )
