@@ -125,15 +125,17 @@ class StencilFixed3D(StencilFree3D):
 
 def get_stencil(args):
     if args.dim == 2:
-        if args.div_free:
-            return StencilFixed2D()
-        else:
-            return StencilFree2D()
+        stencils = {(False, False): StencilFree2D,
+                    (True, False): StencilFixed2D,
+                    (False, True): StencilSymmetric2D,
+                    (True, True): StencilSymmetricFixed2D}
+        return stencils[args.div_free, args.symmetric]()
 
     elif args.dim == 3:
-        if args.div_free:
-            return StencilFixed3D()
-        else:
-            return StencilFree3D()
+        stencils = {(False, False): StencilFree3D,
+                    (True, False): StencilFixed3D}
+                    #(False, True): StencilSymmetric3D,
+                    #(True, True): StencilSymmetricFixed3D}
+        return stencils[args.div_free, args.symmetric]()
 
 
