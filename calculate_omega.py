@@ -55,7 +55,7 @@ def main():
         x = args.params
     elif args.type == "yee":
         x = [0] * stencil.Parameters._nfields
-        x[0] = 0.95 * dispersion.dt_ok(x)
+        x[0] = np.asscalar(0.95 * dispersion.dt_ok(x))
     elif args.type == "pukhov":
         x = [0] * stencil.Parameters._nfields
         x[0] = 0.95
@@ -71,7 +71,7 @@ def main():
             if name == 'deltax':
                 x[i] = -0.025
 
-
+    print('x=', x)
     print('stencil_ok=', dispersion.stencil_ok(x))
     print('dt_ok=', dispersion.dt_ok(x))
     fmin = dispersion.norm(x)

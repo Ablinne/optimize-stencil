@@ -71,15 +71,16 @@ class Optimize:
         stencil_ok = self.dispersion.stencil_ok(x0)
         #print('x00={}, coefficients={}, stencil_ok(x0)={}'.format(x0, self.dispersion.coefficients, stencil_ok))
         if stencil_ok < 0:
-            return None, float('inf')
+            # Initial conditions violate constraints, reject
+            return x0, None, float('inf')
 
         x0[0] = np.asscalar(stencil_ok*0.95)
         x0 = np.asfarray(x0)
         #print('x0', x0)
         res = scop.minimize(self.dispersion.norm, x0, method='SLSQP', constraints = self.constraints, options = dict(disp=False, iprint = 2))
         norm = self.dispersion_high.norm(res.x)
-        print('x0={}, x={}, norm={}'.format(x0, res.x, norm))
-        return res, norm
+
+        return x0, res, norm
 
     def _optimize_final(self, x0):
         res = scop.minimize(self.dispersion_high.norm, x0, method='SLSQP', constraints = self.constraints_high, options = dict(disp=False, iprint = 2))
@@ -108,7 +109,9 @@ class Optimize:
             pool = cf.ProcessPoolExecutor(nproc)
             mymap = pool.map
 
-        for res, norm in mymap(self._optimize_single, itertools.product(*ranges_betadelta)):
+        for x0, res, norm in mymap(self._optimize_single, itertools.product(*ranges_betadelta)):
+            print('x0={}, x={}, norm={}'.format(x0, res.x if res else None, norm))
+            sys.stdout.flush()
             if bestnorm is None or norm < bestnorm:
                 bestnorm = norm
                 bestres = res
