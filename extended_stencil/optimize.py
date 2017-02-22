@@ -6,8 +6,8 @@ import itertools
 import concurrent.futures as cf
 import psutil
 
-from .dispersion import *
-from .stencil import *
+from .dispersion import Dispersion2D, Dispersion3D
+from .stencil import get_stencil
 
 class make_single_max_constraint:
     def __init__(self, index, maxval):
@@ -56,27 +56,32 @@ class Optimize:
 
         for i, fname in enumerate(self.stencil.Parameters._fields):
             bounds = getattr(args, fname+'range')
+            #print('constraint', i, fname, bounds)
             self.constraints.append( dict(type='ineq', fun=make_single_min_constraint(i, bounds[0])) )
             self.constraints.append( dict(type='ineq', fun=make_single_max_constraint(i, bounds[1])) )
 
 
     def _optimize_single(self, betadelta):
         x0 = [0, *betadelta]
-        if self.dispersion.stencil_ok(x0) < 0:
+        stencil_ok = self.dispersion.stencil_ok(x0)
+        #print('x00={}, coefficients={}, stencil_ok(x0)={}'.format(x0, self.dispersion.coefficients, stencil_ok))
+        if stencil_ok < 0:
             return None, float('inf')
 
-        x0[0] = np.asscalar(self.dispersion.dt_ok(x0)*0.95)
+        x0[0] = np.asscalar(stencil_ok*0.95)
         #print('x0', x0)
         res = scop.minimize(self.dispersion.norm, x0, method='SLSQP', constraints = self.constraints, options = dict(disp=False, iprint = 2))
         norm = self.dispersion_high.norm(res.x)
-        print('Started at', x0, 'resulting norm', norm)
+        print('x0={}, x={}, norm={}'.format(x0, res.x, norm))
         return res, norm
 
     def optimize(self):
         ranges_betadelta = []
         for fname in self.stencil.Parameters._fields[1:]:
             bounds = getattr(self.args, fname+'range')
-            ranges_betadelta.append( np.linspace(bounds[0], bounds[1], self.args.N) )
+            r = np.linspace(bounds[0], bounds[1], self.args.N+2)[1:-1]
+            ranges_betadelta.append( r )
+            #print('range', fname, r)
 
         bestnorm = None
         bestres = None

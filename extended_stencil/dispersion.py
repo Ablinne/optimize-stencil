@@ -4,7 +4,6 @@ from . import minmax
 import numpy as np
 import scipy.interpolate as spinterp
 
-from .stencil import Coefficients2D, Coefficients3D
 
 from abc import ABCMeta, abstractmethod, abstractproperty
 

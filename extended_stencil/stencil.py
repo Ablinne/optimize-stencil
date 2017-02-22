@@ -9,7 +9,10 @@ npvmajor, npvminor, npvbugfix = [int(x) for x in npver.split('.')]
 
 class namedarray:
     def __init__(self, field_names):
-        self._fields = [field_name.strip() for field_name in field_names.split(',')]
+        if isinstance(field_names, str):
+            self._fields = [field_name.strip() for field_name in field_names.split(',')]
+        else:
+            self._fields = field_names[:]
         self._nfields = len(self._fields)
         self.dtype = np.dtype([(field_name, float) for field_name in self._fields])
 
@@ -32,76 +35,93 @@ class Stencil(metaclass = ABCMeta):
     Parameters = None
     Coefficients = None
 
+    def __init__(self):
+        self._parameters = self.Coefficients._fields[:]
+        for k in self._fixed_coefficients():
+            try:
+                self._parameters.remove(k)
+            except ValueError:
+                pass
+            #print(k, self._parameters)
+        self.Parameters = namedarray(self._parameters)
+
     @property
     def dof(self):
-        return len(self.Parameters._fields)
+        return len(self._parameters)
 
-    @abstractmethod
-    def coefficients(self, args): ...
+    def coefficients(self, args):
+        c = self.Coefficients.convert(self.Parameters(args))
+        self._fill_coefficients(c)
+        return c
 
+    def _fixed_coefficients(self):
+        #print('_fixed_coeff')
+        return []
 
-Coefficients2D = namedarray("dt, alphax, alphay, betaxy, betayx, deltax, deltay")
-Coefficients3D = namedarray("dt, alphax, alphay, alphaz, betaxy, betaxz, betayx, betayz, betazx, betazy, deltax, deltay, deltaz")
+    def _fill_coefficients(self, coefficients):
+        pass
+
 
 class StencilFree2D(Stencil):
-    Coefficients = Coefficients2D
-    Parameters = namedarray("dt, betaxy, betayx, deltax, deltay")
+    Coefficients = namedarray("dt, alphax, alphay, betaxy, betayx, deltax, deltay")
 
-    def coefficients(self, args):
-        c = self.Coefficients.convert(self.Parameters(args))
+    def _fixed_coefficients(self):
+        return super()._fixed_coefficients() + ['alphax', 'alphay']
+
+    def _fill_coefficients(self, c):
         c.alphax = 1.0 - 2.0 * c.betaxy - 3.0 * c.deltax
         c.alphay = 1.0 - 2.0 * c.betayx - 3.0 * c.deltay
-        return c
+        super()._fill_coefficients(c)
 
-class StencilFixed2D(Stencil):
-    Coefficients = Coefficients2D
-    Parameters = namedarray("dt, deltax, deltay")
+class StencilFixed2D(StencilFree2D):
+    def _fixed_coefficients(self):
+        return super()._fixed_coefficients() + ['betaxy', 'betayx']
 
-    def coefficients(self, args):
-        c = self.Coefficients.convert(self.Parameters(args))
+    def _fill_coefficients(self, c):
         c.betaxy = c.deltay
         c.betayx = c.deltax
-        c.alphax = 1.0 - 2.0 * c.betaxy - 3.0 * c.deltax
-        c.alphay = 1.0 - 2.0 * c.betayx - 3.0 * c.deltay
-        return c
+        super()._fill_coefficients(c)
 
-    def args_ok(self, args):
-        c = self.Coefficients.convert(self.Parameters(args))
-        #print( 1.0/4.0 - (c.deltax+c.deltay))
-        return 1.0/4.0 - (c.deltax+c.deltay)
+
+class StencilSymmetric2D(StencilFree2D):
+    def _fixed_coefficients(self):
+        return super()._fixed_coefficients() + ['deltay', 'betaxy']
+
+    def _fill_coefficients(self, c):
+        c.deltay = c.deltax
+        c.betaxy = c.betayx
+        super()._fill_coefficients(c)
+
+
+class StencilSymmetricFixed2D(StencilFixed2D, StencilSymmetric2D):
+    pass
+
 
 class StencilFree3D(Stencil):
-    Coefficients = Coefficients3D
-    Parameters = namedarray("dt, betaxy, betaxz, betayx, betayz, betazx, betazy, deltax, deltay, deltaz")
+    Coefficients = namedarray("dt, alphax, alphay, alphaz, betaxy, betaxz, betayx, betayz, betazx, betazy, deltax, deltay, deltaz")
 
-    def coefficients(self, args):
-        c = self.Coefficients.convert(self.Parameters(args))
+    def _fixed_coefficients(self):
+        return super()._fixed_coefficients() + ['alphax', 'alphay', 'alphaz']
+
+    def _fill_coefficients(self, c):
         c.alphax = 1.0 - 2.0 * c.betaxy - 2.0 * c.betaxz - 3.0 * c.deltax
         c.alphay = 1.0 - 2.0 * c.betayx - 2.0 * c.betayz - 3.0 * c.deltay
         c.alphaz = 1.0 - 2.0 * c.betazx - 2.0 * c.betazy - 3.0 * c.deltaz
-        return c
+        super()._fill_coefficients(c)
 
-class StencilFixed3D(Stencil):
-    Coefficients = Coefficients3D
-    Parameters = namedarray("dt, deltax, deltay, deltaz")
 
-    def coefficients(self, args):
-        c = self.Coefficients.convert(self.Parameters(args))
+class StencilFixed3D(StencilFree3D):
+    def _fixed_coefficients(self):
+        return super()._fixed_coefficients() + ['betaxy', 'betaxz', 'betayx', 'betayz', 'betazx', 'betazy']
+
+    def _fill_coefficients(self, c):
         c.betaxy = c.deltay
         c.betaxz = c.deltaz
         c.betayx = c.deltax
         c.betayz = c.deltaz
         c.betazx = c.deltax
         c.betazy = c.deltay
-        c.alphax = 1.0 - 2.0 * c.betaxy - 2.0 * c.betaxz - 3.0 * c.deltax
-        c.alphay = 1.0 - 2.0 * c.betayx - 2.0 * c.betayz - 3.0 * c.deltay
-        c.alphaz = 1.0 - 2.0 * c.betazx - 2.0 * c.betazy - 3.0 * c.deltaz
-        return c
-
-    def args_ok(self, args):
-        c = self.Coefficients.convert(self.Parameters(args))
-        #print( 1.0/6.0 - (c.deltax+c.deltay+c.deltaz))
-        return 1.0/6.0 - (c.deltax+c.deltay+c.deltaz)
+        super()._fill_coefficients(c)
 
 def get_stencil(args):
     if args.dim == 2:
