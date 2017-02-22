@@ -18,6 +18,9 @@ def main():
     parser.add_argument('--div-free', dest='div_free', action='store_true', help="Constrain the derivative of div B == 0 (default: %(default)s).")
     parser.add_argument('--no-div-free', dest='div_free', action='store_false', help="Constrain the derivative of div B == 0 (default: %(default)s).")
     parser.set_defaults(div_free=True)
+    parser.add_argument('--symmetric', dest='symmetric', action='store_true', help="Make sure the stencil is symmetric (default: %(default)s).")
+    parser.add_argument('--no-symmetric', dest='symmetric', action='store_false', help="Make sure the stencil is symmetric (default: %(default)s).")
+    parser.set_defaults(symmetric=False)
     parser.add_argument("--Y", default=1, type=float, help="Grid aspect ratio dy/dx (default: %(default)s).")
     parser.add_argument("--Z", default=1, type=float, help="Grid aspect ratio dz/dx (default: %(default)s).")
     parser.add_argument("--params", nargs='*', type = float, help="Parameters for stencil.")
@@ -36,6 +39,10 @@ def main():
         print('Stencil of type {}, setting option --no-div-free'.format(non_div_free_stencils))
         args.div_free = False
 
+    non_symmetric_stencils = ('lehe')
+    if args.type in non_symmetric_stencils and args.symmetric:
+        print('Stencil of type {}, setting option --no-symmetric'.format(non_symmetric_stencils))
+        args.symmetric = False
 
     stencil = get_stencil(args)
 
