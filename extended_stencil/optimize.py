@@ -3,8 +3,6 @@ import sys
 import numpy as np
 import scipy.optimize as scop
 import itertools
-import concurrent.futures as cf
-import psutil
 
 from .dispersion import Dispersion2D, Dispersion3D
 from .stencil import get_stencil
@@ -99,15 +97,26 @@ class Optimize:
         bestnorm = None
         bestres = None
 
-        nproc = psutil.cpu_count(logical=False)
-        if psutil.cpu_count(logical=True) > nproc:
-            nproc+=1
 
         if self.args.singlecore:
             mymap = map
         else:
-            pool = cf.ProcessPoolExecutor(nproc)
-            mymap = pool.map
+            nproc = None
+            try:
+                import psutil
+                nproc = psutil.cpu_count(logical=False)
+                if psutil.cpu_count(logical=True) > nproc:
+                    nproc+=1
+            except ImportError:
+                pass
+
+            #import concurrent.futures as cf
+            #pool = cf.ProcessPoolExecutor(nproc)
+            #mymap = pool.map
+
+            import multiprocessing as mp
+            pool = mp.Pool(nproc)
+            mymap = pool.imap
 
         for x0, res, norm in mymap(self._optimize_single, itertools.product(*ranges_betadelta)):
             print('x0={}, x={}, norm={}'.format(x0, res.x if res else None, norm))
