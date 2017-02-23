@@ -120,30 +120,9 @@ class Dispersion(metaclass = ABCMeta):
         kappa = self.kappamesh
         kmesh = self.kmesh
         k = self.k
-        if omega.ndim == 2:
-            omegaspl = spinterp.RectBivariateSpline(self.kx[:,0], self.ky[0,:], omega)
-            vgx = omegaspl(self.kx[:,0], self.ky[0,:], dy=1)
-            vgy = omegaspl(self.kx[:,0], self.ky[0,:], dx=1)
-            vg = np.sqrt(vgx**2 + vgy**2)
-        if omega.ndim == 3:
-            vgx = np.zeros_like(omega)
-            vgy = np.array(vgx)
-            vgz = np.array(vgx)
-
-            vgx[   0, :, :] =      (omega[ 1, :, :]-omega[  0, :, :])/(k[1,0,0])
-            vgx[  -1, :, :] =      (omega[-1, :, :]-omega[ -1, :, :])/(k[1,0,0])
-            vgx[1:-1, :, :] = 0.5*((omega[2:, :, :]-omega[:-2, :, :])/(k[1,0,0]))
-
-            vgy[:,    0, :] =      (omega[:,  1, :]-omega[:,   0, :])/(k[0,1,0])
-            vgy[:,   -1, :] =      (omega[:, -1, :]-omega[:,  -1, :])/(k[0,1,0])
-            vgy[:, 1:-1, :] = 0.5*((omega[:, 2:, :]-omega[:, :-2, :])/(k[0,1,0]))
-
-            vgz[:, :,    0] =      (omega[:, : , 1]-omega[:, :,   0])/(k[0,0,1])
-            vgz[:, :,   -1] =      (omega[:, : ,-1]-omega[:, :,  -1])/(k[0,0,1])
-            vgz[:, :, 1:-1] = 0.5*((omega[:, : ,2:]-omega[:, :, :-2])/(k[0,0,1]))
-
-            vg = np.sqrt(vgx**2 + vgy**2 + vgz**2)
-        columns = [*np.broadcast_arrays(*kappa), k, omega, omega/k, vg]
+        vgs = np.gradient(omega, *self.dks, edge_order=2)
+        vg = np.sqrt(sum(vgc**2 for vgc in vgs))
+        columns = [*np.broadcast_arrays(*kappa), k, omega, omega/k, vg, *vgs]
         np.savetxt(fname, np.vstack(map(np.ravel, columns)).T)
 
 
@@ -179,6 +158,7 @@ class Dispersion2D(Dispersion):
         self.kappax, self.kappay = self.kappamesh
         self.kx = self.kappax
         self.ky = self.kappay/self.Y
+        self.dks = self.kx[1,0], self.ky[0,1]
         self.kmesh = self.kx, self.ky
         self.k = np.sqrt(self.kx**2 + self.ky**2)
         self.coskappax=np.cos(self.kappax)
@@ -247,6 +227,7 @@ class Dispersion3D(Dispersion):
         self.ky = self.kappay/self.Y
         self.kz = self.kappaz/self.Z
         self.kmesh = self.kx, self.ky, self.kz
+        self.dks = self.kx[1,0,0], self.ky[0,1,0], self.kz[0,0,1]
 
         self.k = np.sqrt((self.kappax)**2 + (self.kappay/self.Y)**2 + (self.kappaz/self.Z)**2)
         self.coskappax=np.cos(self.kappax)
