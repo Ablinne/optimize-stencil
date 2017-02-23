@@ -13,18 +13,19 @@ class Dispersion(metaclass = ABCMeta):
     w = 1.0
     dx = 1.0
     dim = 1
+    stencil = None
 
-    def __init__(self):
+    def __init__(self, runinit2=True):
         self._parameters = None
         self._sqrtarg = None
         self._sqrtres = None
         self._coefficients = None
         self.init2_run = False
-        self.stencil = None
+        if runinit2:
+            self.init2()
 
-    @abstractmethod
     def init2(self):
-        ...
+        self.init2_run = True
 
     @property
     def parameters(self):
@@ -165,13 +166,11 @@ class Dispersion(metaclass = ABCMeta):
 
 class Dispersion2D(Dispersion):
     dim = 2
-    def __init__(self, Y, N, stencil):
-        super(self.__class__, self).__init__()
+    def __init__(self, Y, N, stencil, **kwargs):
         self.Y = Y
         self.N = N
         self.stencil = stencil
-        self.init2_run = False
-        #self.init2()
+        super(self.__class__, self).__init__(**kwargs)
 
 
     def init2(self):
@@ -186,7 +185,7 @@ class Dispersion2D(Dispersion):
         self.coskappay=np.cos(self.kappay)
         self.sx2 = 0.5*(1. - self.coskappax) #np.sin(kappax/2)**2
         self.sy2 = 0.5*(1. - self.coskappay) #np.sin(kappay/2)**2
-        self.init2_run = True
+        super().init2()
 
 
     def stencil_ok(self, parameters):
@@ -232,13 +231,12 @@ class Dispersion2D(Dispersion):
 class Dispersion3D(Dispersion):
     dim = 3
     def __init__(self, Y, Z, N, stencil):
-        super(self.__class__, self).__init__()
         self.Y = Y
         self.Z = Z
         self.N = N
         self.stencil = stencil
-        self.init2_run = False
-        #self.init2()
+        super(self.__class__, self).__init__()
+
 
     def init2(self):
         x = np.linspace(0, np.pi, self.N)
@@ -257,7 +255,7 @@ class Dispersion3D(Dispersion):
         self.sx2 = 0.5*(1. - self.coskappax) #np.sin(kappax/2)**2
         self.sy2 = 0.5*(1. - self.coskappay) #np.sin(kappay/2)**2
         self.sz2 = 0.5*(1. - self.coskappaz) #np.sin(kappaz/2)**2
-        self.init2_run = True
+        super().init2()
 
 
     def stencil_ok(self, parameters):
