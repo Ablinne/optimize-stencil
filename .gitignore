@@ -2,3 +2,4 @@
 OptimizeStencil.egg-info
 *.dat
 *.pyc
+build
