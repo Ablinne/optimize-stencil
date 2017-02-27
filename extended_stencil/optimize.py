@@ -32,6 +32,7 @@ class Optimize:
         self.dim = args.dim
         self.div_free = args.div_free
         self.stencil = get_stencil(args)
+        print('Using stencil', self.stencil.__class__.__name__, 'with free parameters', ", ".join(self.stencil.Parameters._fields))
 
         if self.dim == 2:
             self.dispersion = Dispersion2D(args.Y, args.Ngrid_low, self.stencil)

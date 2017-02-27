@@ -7,7 +7,7 @@ from  extended_stencil import *
 
 class TestDispersion2D(unittest.TestCase):
     def setUp(self):
-        self.stencil = StencilFixed2D()
+        self.stencil = StencilDivFree2D()
         self.dispersion = Dispersion2D(1, 100, self.stencil)
 
     def test_omega(self):
@@ -32,7 +32,7 @@ class TestDispersion2DFree(unittest.TestCase):
 
 class TestDispersion3D(unittest.TestCase):
     def setUp(self):
-        self.stencil = StencilFixed3D()
+        self.stencil = StencilDivFree3D()
         self.dispersion = Dispersion3D(1, 1, 100, self.stencil)
 
     def test_omega(self):
