@@ -225,13 +225,16 @@ class StencilSymmetric3D(StencilFree3D):
         super()._fill_coefficients(c)
 
 
-class StencilCylinder3D(StencilSymmetric3D):
-    Flags = StencilSymmetric3D.Flags | frozenset([StencilFlags.CYLINDERSYM])
+class StencilCylinder3D(StencilFree3D):
+    Flags = StencilFree3D.Flags | frozenset([StencilFlags.CYLINDERSYM])
     def _fixed_coefficients(self):
         return super()._fixed_coefficients() + ['betayx', 'betayz', 'betazy', 'deltay']
 
     def _fill_coefficients(self, c):
         c.deltay = c.deltax
+        c.betayx = c.betaxy
+        c.betayz = c.betaxz
+        c.betazy = c.betazx
         super()._fill_coefficients(c)
 
 

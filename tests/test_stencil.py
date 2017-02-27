@@ -45,6 +45,19 @@ class TestGetStencil3D(unittest.TestCase):
         s = Stencil.get_stencil(args)
         assert isinstance(s, StencilSymmetric3D)
 
+
+    @raises(NotImplementedError)
+    def test_CylinderDivFreeSymmetric(self):
+        ### This is a contradiction as Cylinder + DivFree -> betazx != betaxz
+        args = SimpleNamespace()
+        args.dim = 3
+        args.symmetric_axes = 1
+        args.div_free = True
+        args.symmetric_beta = True
+
+        s = Stencil.get_stencil(args)
+
+
     def test_Cylinder(self):
         args = SimpleNamespace()
         args.dim = 3
@@ -55,9 +68,17 @@ class TestGetStencil3D(unittest.TestCase):
         s = Stencil.get_stencil(args)
         assert isinstance(s, StencilCylinder3D)
 
+
+    @raises(NotImplementedError)
+    def test_CylinderSymmetric(self):
+        ### This is a contradiction as Cylinder + DivFree -> betazx != betaxz
+        args = SimpleNamespace()
+        args.dim = 3
+        args.symmetric_axes = 1
+        args.div_free = False
         args.symmetric_beta = True
+
         s = Stencil.get_stencil(args)
-        assert isinstance(s, StencilCylinder3D)
 
 
     def test_CylinderDivFree(self):
@@ -69,11 +90,6 @@ class TestGetStencil3D(unittest.TestCase):
 
         s = Stencil.get_stencil(args)
         assert isinstance(s, StencilCylinderDivFree3D)
-
-        args.symmetric_beta = True
-        s = Stencil.get_stencil(args)
-        assert isinstance(s, StencilCylinderDivFree3D)
-
 
 
     def test_Isotropic(self):
