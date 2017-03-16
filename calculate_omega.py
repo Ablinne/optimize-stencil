@@ -47,6 +47,8 @@ def main():
 
     stencil = get_stencil(args)
 
+    print('Selected stencil', stencil.__class__.__name__, 'requires parameters', stencil.Parameters._fields)
+
     if args.dim == 2:
         dispersion = Dispersion2D(args.Y, args.Ngrid_high, stencil)
     elif args.dim == 3:
