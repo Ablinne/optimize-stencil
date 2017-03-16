@@ -122,7 +122,10 @@ class Dispersion(metaclass = ABCMeta):
         k = self.k
         vgs = np.gradient(omega, *self.dks, edge_order=2)
         vg = np.sqrt(sum(vgc**2 for vgc in vgs))
-        data = [*np.broadcast_arrays(*kappa), k, omega, omega/k, vg, *vgs]
+        vph = omega/k
+        vph.ravel()[0] = 1.
+        data = [*np.broadcast_arrays(*kappa), k, omega, vph, vg, *vgs]
+
         data = np.broadcast_arrays(*data)
         blocks = zip(*map(lambda x: np.vsplit(x, x.shape[0]), data))
         with open(fname, 'wb') as f:
