@@ -123,7 +123,11 @@ class Dispersion(metaclass = ABCMeta):
         vgs = np.gradient(omega, *self.dks, edge_order=2)
         vg = np.sqrt(sum(vgc**2 for vgc in vgs))
         columns = [*np.broadcast_arrays(*kappa), k, omega, omega/k, vg, *vgs]
-        np.savetxt(fname, np.vstack(map(np.ravel, columns)).T)
+        with open(fname, 'wb') as f:
+            kappanames = ' '.join(['kx', 'ky', 'kz'][:len(kappa)])
+            vgsnames = ' '.join(['vgx', 'vgy', 'vgz'][:len(vgs)])
+            f.write(('#' + kappanames + ' k omega vph vg ' + vgsnames + '\n').encode('us-ascii'))
+            np.savetxt(f, np.vstack(map(np.ravel, columns)).T)
 
 
     def norm(self, parameters):
