@@ -52,6 +52,8 @@ def main():
 
     if(args.output=='standard'):
         print("norm=", fmin, "\n")
+        print('stencil_ok=', opt.dispersion_high.stencil_ok(x))
+        print('dt_ok=', opt.dispersion_high.dt_ok(x))
         for item in zip(opt.stencil.Coefficients._fields, coefficients[0]):
             print('{}={}'.format(*item))
     if(args.output=='array'):
