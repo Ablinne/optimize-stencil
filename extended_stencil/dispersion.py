@@ -12,7 +12,8 @@ class Dispersion(metaclass = ABCMeta):
     #weight function
     w = 1.0
     dx = 1.0
-    dim = 1
+    dim = 0
+    dt_multiplier = 1.0
     stencil = None
 
     def __init__(self, runinit2=True):
@@ -79,7 +80,7 @@ class Dispersion(metaclass = ABCMeta):
             return stencil_ok
 
         dx = self.dx
-        dt_ok = 1.0/np.max(dx*self.sqrtres) - c.dt
+        dt_ok = self.dt_multiplier/np.max(dx*self.sqrtres) - c.dt
 
         if np.isnan(dt_ok):
             raise ValueError("dt_ok got NaN")
@@ -120,6 +121,7 @@ class Dispersion(metaclass = ABCMeta):
         kappa = self.kappamesh
         kmesh = self.kmesh
         k = self.k
+        #print(omega, self.dks)
         vgs = np.gradient(omega, *self.dks, edge_order=2)
         vg = np.sqrt(sum(vgc**2 for vgc in vgs))
         vph = omega/k

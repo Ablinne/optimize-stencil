@@ -51,6 +51,9 @@ class Optimize:
             Y = args.Y
             Z = args.Z
 
+        self.dispersion.dt_multiplier = args.dt_multiplier
+        self.dispersion_high.dt_multiplier = args.dt_multiplier
+
         self.constraints.append( dict(type='ineq', fun=self.dispersion.stencil_ok) )
         self.constraints.append( dict(type='ineq', fun=self.dispersion.dt_ok) )
         self.constraints_high.append( dict(type='ineq', fun=self.dispersion_high.stencil_ok) )

@@ -26,6 +26,7 @@ def main():
     parser.add_argument('--symmetric-beta', action='store_true', help="Demand that the beta coefficients should form a symmetric matrix")
     parser.add_argument("--Y", default=1, type=float, help="Grid aspect ratio dy/dx (default: %(default)s).")
     parser.add_argument("--Z", default=1, type=float, help="Grid aspect ratio dz/dx (default: %(default)s).")
+    parser.add_argument("--dt-multiplier", default=1.0, type=float, help="Multiplier to be applied to time step as returned by CFL condition (default: %(default)s).")
     parser.add_argument("--deltaxrange", default=[-1,0.25], nargs=2, type = float, metavar=('min', 'max'), help="Range of deltax (default: %(default)s).")
     parser.add_argument("--deltayrange", default=[-1,0.25], nargs=2, type = float, metavar=('min', 'max'), help="Range of deltay (default: %(default)s).")
     parser.add_argument("--deltazrange", default=[-1,0.25], nargs=2, type = float, metavar=('min', 'max'), help="Range of deltaz (default: %(default)s).")

@@ -24,6 +24,7 @@ def main():
     parser.add_argument('--symmetric-beta', action='store_true', help="Demand that the beta coefficients should form a symmetric matrix")
     parser.add_argument("--Y", default=1, type=float, help="Grid aspect ratio dy/dx (default: %(default)s).")
     parser.add_argument("--Z", default=1, type=float, help="Grid aspect ratio dz/dx (default: %(default)s).")
+    parser.add_argument("--dt-multiplier", default=1.0, type=float, help="Multiplier to be applied to time step as returned by CFL condition (default: %(default)s).")
     parser.add_argument("--params", nargs='*', type = float, help="Parameters for stencil.")
     parser.add_argument("--lehe", action='store_const', dest='type', const='lehe')
     parser.add_argument("--yee", action='store_const', dest='type', const='yee')
@@ -54,6 +55,7 @@ def main():
     elif args.dim == 3:
         dispersion = Dispersion3D(args.Y, args.Z, args.Ngrid_high, stencil)
 
+    dispersion.dt_multiplier = args.dt_multiplier
     if args.type == "free":
         x = args.params
     elif args.type == "yee":
