@@ -56,25 +56,40 @@ def main():
         dispersion = Dispersion3D(args.Y, args.Z, args.Ngrid_high, stencil)
 
     dispersion.dt_multiplier = args.dt_multiplier
+
     if args.type == "free":
         x = args.params
     elif args.type == "yee":
         x = [0] * stencil.Parameters._nfields
-        x[0] = np.asscalar(0.95 * dispersion.dt_ok(x))
+        x[0] = np.asscalar(dispersion.dt_ok(x))
+
     elif args.type == "pukhov":
         x = [0] * stencil.Parameters._nfields
-        x[0] = 0.95
         for i, name in enumerate(stencil.Parameters._fields):
             if name.startswith('beta'):
-                x[i] = 0.125
+                if name[5] == 'x':
+                    x[i] = 0.125
+                elif name[5] == 'y':
+                    x[i] = 0.125/args.Y**2
+                elif name[5] == 'z':
+                    x[i] = 0.125/args.Z**2
+        x[0] = np.asscalar(dispersion.dt_ok(x))
+
+
     elif args.type == "lehe":
         x = [0] * stencil.Parameters._nfields
-        x[0] = 0.95
+        x[0] = args.params[0]
         for i, name in enumerate(stencil.Parameters._fields):
             if name.startswith('beta'):
-                x[i] = 0.125
+                if name[5] == 'x':
+                    x[i] = 0.125
+                elif name[5] == 'y':
+                    x[i] = 0.125/args.Y**2
+                elif name[5] == 'z':
+                    x[i] = 0.125/args.Z**2
+
             if name == 'deltax':
-                x[i] = -0.025
+                x[i] = 0.25*(1-1/x[0]**2*np.sin(np.pi*x[0]/2.0))
 
     print('x=', x)
     print('stencil_ok=', dispersion.stencil_ok(x))
