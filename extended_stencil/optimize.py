@@ -59,6 +59,9 @@ class Optimize:
         self.constraints_high.append( dict(type='ineq', fun=self.dispersion_high.stencil_ok) )
         self.constraints_high.append( dict(type='ineq', fun=self.dispersion_high.dt_ok) )
 
+        self.dtmin = self.args.dtrange[0]
+        self.dtmax = self.args.dtrange[0]
+
         for i, fname in enumerate(self.stencil.Parameters._fields):
             bounds = getattr(args, fname+'range')
             #print('constraint', i, fname, bounds)
@@ -70,15 +73,21 @@ class Optimize:
 
     def _optimize_single(self, betadelta):
         x0 = [0, *betadelta]
-        stencil_ok = self.dispersion.stencil_ok(x0)
+        dt_ok = np.asscalar(self.dispersion.dt_ok(x0))
         #print('x00={}, coefficients={}, stencil_ok(x0)={}'.format(x0, self.dispersion.coefficients, stencil_ok))
-        if stencil_ok < 0:
+        if dt_ok < 0:
             # Initial conditions violate constraints, reject
             return x0, None, float('inf')
 
-        x0[0] = np.asscalar(stencil_ok*0.95)
+        x0[0] = dt_ok
+        x0[0] = min(x0[0], self.dtmax)
+        x0[0] = max(x0[0], self.dtmin)
         x0 = np.asfarray(x0)
-        #print('x0', x0)
+
+        stencil_ok = self.dispersion.stencil_ok(x0)
+        if stencil_ok < 0:
+            return x0, None, float('inf')
+
         res = scop.minimize(self.dispersion.norm, x0, method='SLSQP', constraints = self.constraints, options = dict(disp=False, iprint = 2))
         norm = self.dispersion_high.norm(res.x)
 
