@@ -13,7 +13,8 @@ from extended_stencil import Optimize
 def main():
 
     parser = argparse.ArgumentParser(description = "This script calculates the optimal coefficients for a FDTD stencil.")
-    parser.add_argument("--N", default=3, type=int, help="Number of steps in each coefficient (default: %(default)s).")
+    parser.add_argument("--N", default=3, type=int, help="Number of scan points for initial conditions in each coefficient (default: %(default)s).")
+    parser.add_argument("--scan-dt", action='store_true', help="Scan also through the allowed range of the time step for initial conditions (default: %(default)s).")
     parser.add_argument("--Ngrid_low", default=50, type=int, help="Gridsize for the fast calculation of the norm in the simplex algorithm (default: %(default)s).")
     parser.add_argument("--Ngrid_high", default=200, type=int, help="Gridsize for the accurate norm calculation after simplex  run (default: %(default)s).")
     parser.add_argument("--dim", default=2, type=int, choices=[2,3], help="Dimension of the stencil to be optimized (default: %(default)s).")

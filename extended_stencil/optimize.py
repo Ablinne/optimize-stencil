@@ -60,7 +60,7 @@ class Optimize:
         self.constraints_high.append( dict(type='ineq', fun=self.dispersion_high.dt_ok) )
 
         self.dtmin = self.args.dtrange[0]
-        self.dtmax = self.args.dtrange[0]
+        self.dtmax = self.args.dtrange[1]
 
         for i, fname in enumerate(self.stencil.Parameters._fields):
             bounds = getattr(args, fname+'range')
@@ -71,21 +71,25 @@ class Optimize:
             self.constraints_high.append( dict(type='ineq', fun=make_single_max_constraint(i, bounds[1])) )
 
 
-    def _optimize_single(self, betadelta):
-        x0 = [0, *betadelta]
-        dt_ok = np.asscalar(self.dispersion.dt_ok(x0))
-        #print('x00={}, coefficients={}, stencil_ok(x0)={}'.format(x0, self.dispersion.coefficients, stencil_ok))
-        if dt_ok < 0:
-            # Initial conditions violate constraints, reject
-            return x0, None, float('inf')
+    def _optimize_single(self, x0):
+        x0 = list(x0)
 
-        x0[0] = dt_ok
-        x0[0] = min(x0[0], self.dtmax)
-        x0[0] = max(x0[0], self.dtmin)
+        if x0[0] == None:
+            x0[0] = 0
+            dt_ok = np.asscalar(self.dispersion.dt_ok(x0))
+            if dt_ok < 0:
+                # Initial conditions violate constraints, reject
+                return x0, None, float('inf')
+
+            x0[0] = dt_ok
+            x0[0] = min(x0[0], self.dtmax)
+            x0[0] = max(x0[0], self.dtmin)
+
         x0 = np.asfarray(x0)
 
         stencil_ok = self.dispersion.stencil_ok(x0)
         if stencil_ok < 0:
+            # Initial conditions violate constraints, reject
             return x0, None, float('inf')
 
         res = scop.minimize(self.dispersion.norm, x0, method='SLSQP', constraints = self.constraints, options = dict(disp=False, iprint = 2))
@@ -106,6 +110,11 @@ class Optimize:
             r = np.linspace(bounds[0], bounds[1], self.args.N+2)[1:-1]
             ranges_betadelta.append( r )
             #print('range', fname, r)
+
+        if self.args.scan_dt:
+            range_dt = np.linspace(self.dtmin, self.dtmax, self.args.N+2)[1:-1]
+        else:
+            range_dt = [None]
 
         bestnorm = None
         bestres = None
@@ -131,7 +140,8 @@ class Optimize:
             pool = mp.Pool(nproc)
             mymap = pool.imap
 
-        for x0, res, norm in mymap(self._optimize_single, itertools.product(*ranges_betadelta)):
+
+        for x0, res, norm in mymap(self._optimize_single, itertools.product(range_dt, *ranges_betadelta)):
             print('x0={}, x={}, norm={}'.format(x0, res.x if res else None, norm))
             sys.stdout.flush()
             if bestnorm is None or norm < bestnorm:
