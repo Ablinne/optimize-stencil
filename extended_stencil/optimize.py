@@ -118,6 +118,7 @@ class Optimize:
 
         bestnorm = None
         bestres = None
+        bestx0 = None
 
 
         if self.args.singlecore:
@@ -147,10 +148,16 @@ class Optimize:
             if bestnorm is None or norm < bestnorm:
                 bestnorm = norm
                 bestres = res
+                bestx0 = x0
 
-        res, norm = self._optimize_final(bestres.x)
 
-        return res.x, norm
+        if self.args.Ngrid_high != self.args.Ngrid_low:
+            print()
+            print('using this result as starting point for high-res optimization:')
+            print('x0={},x={}, norm={}'.format(bestx0, bestres.x, bestnorm))
+            bestres, bestnorm = self._optimize_final(bestres.x)
+
+        return bestres.x, bestnorm
 
     def omega_output(self, fname, x):
         return self.dispersion_high.omega_output(fname, x)
