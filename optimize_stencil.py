@@ -43,13 +43,15 @@ def main():
     parser.add_argument("--output", default="standard", choices=["standard", "array", "epoch"], help="Output format, 'standard' prints a list of the named coefficients, 'array' prints the returned array x as it is with [dt, beta{xyz}{xyz}, delta{xyz}, norm] and 'epoch' prints it compatible with the input decks of the EPOCH-Code.")
     parser.add_argument("--write-omega", default = None, help="Write omega to file OUTFILE", metavar="OUTFILE")
     args = parser.parse_args()
-    print(args)
+    print('Arguments are:', args)
+    print('Starting Optimization.')
     #sys.exit()
 
     opt = Optimize(args)
     x, fmin = opt.optimize()
     coefficients = opt.stencil.coefficients(x)
-    #print(x)
+
+    print('\nOptimization finished. Results:')
 
     if(args.output=='standard'):
         print("norm=", fmin, "\n")
