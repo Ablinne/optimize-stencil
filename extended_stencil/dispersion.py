@@ -124,6 +124,10 @@ class Dispersion(metaclass = ABCMeta):
         #print(omega, self.dks)
         vgs = np.gradient(omega, *self.dks, edge_order=2)
         vg = np.sqrt(sum(vgc**2 for vgc in vgs))
+        if self.dim==2:
+            vg[:3,:3] = 1
+        elif self.dim==3:
+            vg[:3,:3,:3] = 1
         vph = omega/k
         vph.ravel()[0] = 1.
         data = [*np.broadcast_arrays(*kappa), k, omega, vph, vg, *vgs]
