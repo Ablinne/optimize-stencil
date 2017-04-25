@@ -9,6 +9,16 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 
 
 class Dispersion(metaclass = ABCMeta):
+    """This class is used to define objects which understand the dispersion relation
+    of a stencil. As it is an abstract base class, only its subclasses are really useful.
+
+    .. note::
+
+        It implements a mechanism to lazily initialize parts of the object, in order to
+        keep the object pickleable.
+
+    """
+
     #weight function
     w = 1.0
     dx = 1.0
@@ -17,6 +27,12 @@ class Dispersion(metaclass = ABCMeta):
     stencil = None
 
     def __init__(self, runinit2=True):
+        """Initializer. Should only create pickleable state.
+
+        :param runinit2: Run second initializer immediately. Default is False.
+        :type runinit2: bool
+        """
+
         self._parameters = None
         self._sqrtarg = None
         self._sqrtres = None
@@ -26,6 +42,8 @@ class Dispersion(metaclass = ABCMeta):
             self.init2()
 
     def init2(self):
+        """Second initializer which must be used to create unpickleable state on lazy initialization"""
+
         self.init2_run = True
 
     @property
