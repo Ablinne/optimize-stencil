@@ -10,9 +10,14 @@ Welcome to Optimize Stencil's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   readme
+
+   introduction
+
+   command-line-utilities
+
    code
 
-   readme
 
 
 Indices and tables
