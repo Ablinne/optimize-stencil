@@ -1,6 +1,8 @@
 
-Documentation for the Code
-**************************
+.. _code:
+
+Documentation for the Package :mod:`extended_stencil`
+*****************************************************
 
 Module extended_stencil.dispersion
 ----------------------------------

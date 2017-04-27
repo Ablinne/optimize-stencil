@@ -84,6 +84,3 @@ Contributors
 
 If you have problems let me know (https://git.tpi.uni-jena.de/albn/optimize_stencil/issues).
 
-<!-- ## License -->
-
-<!--This project is released under the GPL.-->
