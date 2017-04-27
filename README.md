@@ -4,7 +4,7 @@ Read Me
 
 Optimize Stencil is a python utility, consisting of one python package `extended_stencil` and two command line utilities.
 It is used to calculate optimal coefficients for an extended stencil used in a Maxwell Solver.
-More information can be found in the full documentation and our published research article (TODO).
+More information can be found in the full documentation and our published research article.
 
 
 Authors
@@ -23,7 +23,7 @@ This utility/package requires Python 3 and SciPy/NumPy.
 Recommended modules
 -------------------
 
-The module `psutil` can be optionally used to find the number of physical cores.
+The module :mod:`psutil` can be optionally used to find the number of physical cores.
 
 
 Installation
@@ -39,13 +39,13 @@ The package and command line utilites are installed via the usual setup.py invoc
 Documentation & API Reference
 -----------------------------
 
-The full documentation is maintained using Sphinx and available online at TODO.
+The full documentation is maintained using Sphinx and can be built from the `doc` subdirectory of the project sources.
 
 
 Usage Example
 -------------
 
-The command line utilities are easy to use.
+The command line utilities are easy to use::
 
     optimize_stencil.py
 
@@ -57,6 +57,8 @@ The command line utilities are easy to use.
 Code Example
 ------------
 
+::
+
     from extended_stencil import Optimize
 
     opt = Optimize(args)
@@ -67,7 +69,7 @@ Code Example
 Tests
 -----
 
-Some unit tests are implemented and can be run using
+Some unit tests are implemented and can be run using::
 
     nosetests
 
