@@ -1,14 +1,38 @@
 
+# This file is part of the optimize_stencil project
+#
+# Copyright (c) 2017 Alexander Blinne, David Schinkel
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import sys
 import numpy as np
 import scipy.optimize as scop
 import itertools
 
-from .dispersion import Dispersion2D, Dispersion3D
+from .dispersion import Dispersion, Dispersion2D, Dispersion3D
 from .stencil import get_stencil
 
 class make_single_max_constraint:
+    """Class representing upper bounds for parameters."""
+
     def __init__(self, index, maxval):
+        """:param index: Index of the parameter which is to be bounded
+        :type index: int
+        :param maxval: Upper bound
+        :type maxval: float
+        """
         self.index = index
         self.maxval = maxval
 
@@ -17,7 +41,14 @@ class make_single_max_constraint:
 
 
 class make_single_min_constraint:
+    """Class representing lower bounds for parameters."""
+
     def __init__(self, index, minval):
+        """:param index: Index of the parameter which is to be bounded
+        :type index: int
+        :param maxval: Lower bound
+        :type maxval: float
+        """
         self.index = index
         self.minval = minval
 
@@ -25,7 +56,11 @@ class make_single_min_constraint:
         return p[self.index]-self.minval
 
 class Optimize:
+    """Class that contains the main optimization logic."""
+
     def __init__(self, args):
+        """:param args: Namespace object containing all the arguments.
+        :type args: namespace"""
         self.args = args
         self.constraints = []
         self.constraints_high = []
@@ -104,6 +139,10 @@ class Optimize:
         return res, norm
 
     def optimize(self):
+        """Execute the optimization.
+
+        This will loop through the grid of starting values and return the best optimization result."""
+
         ranges_betadelta = []
         for fname in self.stencil.Parameters._fields[1:]:
             bounds = getattr(self.args, fname+'range')
@@ -160,4 +199,6 @@ class Optimize:
         return bestres.x, bestnorm
 
     def omega_output(self, fname, x):
+        """Write resulting dispersion relation through :func:`extended_stencil.dispersion.Dispersion.omega_output`."""
+
         return self.dispersion_high.omega_output(fname, x)

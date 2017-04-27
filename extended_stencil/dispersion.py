@@ -1,4 +1,21 @@
 
+# This file is part of the optimize_stencil project
+#
+# Copyright (c) 2017 Alexander Blinne, David Schinkel
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 from . import minmax
 
 import numpy as np
@@ -21,15 +38,24 @@ class Dispersion(metaclass = ABCMeta):
 
     #weight function
     w = 1.0
+    """The weight function. In this version w=1."""
+
     dx = 1.0
+    """The step unit dx = 1.0. No need to change this, because the other dimensions are given in relation to dx."""
+
     dim = 0
+    """The dimensionality of the Dispersion relation. Subclasses have dim=2 or dim=3."""
+
     dt_multiplier = 1.0
+    """The dt_multiplier used in the CFL-condition. Change to something smaller than one if you want to make sure to stay under the CFL condition."""
+
     stencil = None
+    """The stencil object defining the dispersion relation."""
 
     def __init__(self, runinit2=True):
-        """Initializer. Should only create pickleable state.
+        """The initializer should only create pickleable state.
 
-        :param runinit2: Run second initializer immediately. Default is False.
+        :param runinit2: Run second initializer :func:`Dispersion.init2` immediately. Default is False.
         :type runinit2: bool
         """
 
@@ -42,12 +68,19 @@ class Dispersion(metaclass = ABCMeta):
             self.init2()
 
     def init2(self):
-        """Second initializer which must be used to create unpickleable state on lazy initialization"""
+        """Second initializer which must be used to create unpickleable state on lazy initialization."""
 
         self.init2_run = True
 
     @property
     def parameters(self):
+        """This read/write-property manages the parameters to the numerical dispersion relation.
+        Setting the property requires an array of the correct length.
+
+        :param parameters: Array containing the parameters.
+        :type parameters: numpy.ndarray
+        """
+
         return self._parameters
 
     @parameters.setter
@@ -68,10 +101,14 @@ class Dispersion(metaclass = ABCMeta):
 
     @property
     def coefficients(self):
+        """This read-only property returns the full list of coefficients defining the numerical dispersion relation"""
+
         return self._coefficients
 
     @property
     def sqrtres(self):
+        """This read-only property represents the right hand side of :math:`s_\\omega=\\sqrt{\\sum_i s_i^2 A_i}`."""
+
         if self._sqrtres is None:
             self._sqrtres = np.sqrt(self.sqrtarg)
 
@@ -82,9 +119,17 @@ class Dispersion(metaclass = ABCMeta):
 
     @abstractproperty
     def sqrtarg():
+        """This read-only property represents the term under the square-root on the right hand side of :math:`s_\\omega=\\sqrt{\\sum_i s_i^2 A_i}`."""
+
         ...
 
     def dt_ok(self, parameters):
+        """This function represents the optimization constraint that the time step must fulfil the CFL condition
+
+        :param parameters: Array containing the parameters.
+        :type parameters: numpy.ndarray
+        """
+
         self.parameters = parameters
         if np.any(np.isnan(parameters)):
             # in some weird cases the optimizer goes rogue and feeds me NaNs...
@@ -105,7 +150,21 @@ class Dispersion(metaclass = ABCMeta):
 
         return dt_ok
 
+    def stencil_ok(self, parameters):
+        """This function represents the optimization constraint that :math:`s_\\omega=\\sqrt{\\sum_i s_i^2 A_i}\\leq 1`.
+
+        :param parameters: Array containing the parameters.
+        :type parameters: numpy.ndarray
+        """
+        ...
+
     def omega(self, parameters):
+        """This function returns the function :math:`\\omega(\\vec{k})`
+
+        :param parameters: Array containing the parameters.
+        :type parameters: numpy.ndarray
+        """
+
         self.parameters = parameters
         c = self.coefficients
 
@@ -135,6 +194,14 @@ class Dispersion(metaclass = ABCMeta):
 
 
     def omega_output(self, fname, parameters):
+        """This method writes the dispersion relation to the file fname.
+
+        :param fname: Filename
+        :type fname: string
+        :param parameters: Array containing the parameters.
+        :type parameters: numpy.ndarray
+        """
+
         omega = self.omega(parameters)
         kappa = self.kappamesh
         kmesh = self.kmesh
@@ -163,6 +230,11 @@ class Dispersion(metaclass = ABCMeta):
 
 
     def norm(self, parameters):
+        """This method returns the norm of the dispersion relation with the given parameters.
+
+        :param parameters: Array containing the parameters.
+        :type parameters: numpy.ndarray
+        """
         if np.any(np.isnan(parameters)):
             # in some weird cases the optimizer goes rogue and feeds me NaNs...
             return 1e6
@@ -180,6 +252,8 @@ class Dispersion(metaclass = ABCMeta):
         return F
 
 class Dispersion2D(Dispersion):
+    """This class is a specialisation of the class :class:`Dispersion` for the two-dimensional case."""
+
     dim = 2
     def __init__(self, Y, N, stencil, **kwargs):
         self.Y = Y
@@ -245,6 +319,8 @@ class Dispersion2D(Dispersion):
 
 
 class Dispersion3D(Dispersion):
+    """This class is a specialisation of the class :class:`Dispersion` for the three-dimensional case."""
+
     dim = 3
     def __init__(self, Y, Z, N, stencil):
         self.Y = Y

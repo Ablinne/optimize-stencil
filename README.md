@@ -75,7 +75,7 @@ Some unit tests are implemented and can be run using
 License
 -------
 
-This code is released under some license (TODO)
+This project is published under the GNU GENERAL PUBLIC LICENSE Version 3, see COPYING.
 
 
 

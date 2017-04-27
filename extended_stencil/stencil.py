@@ -1,4 +1,21 @@
 
+# This file is part of the optimize_stencil project
+#
+# Copyright (c) 2017 Alexander Blinne
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 from collections import namedtuple
 from enum import Enum
 from abc import ABCMeta, abstractmethod
@@ -11,7 +28,11 @@ from numpy.version import version as npver
 npvmajor, npvminor, npvbugfix = [int(x) for x in npver.split('.')]
 
 class namedarray:
+    """Class representing a set of field names such that any list or array of numbers can be casted into a :class:`numpy.recarray`"""
+
     def __init__(self, field_names):
+        """:param field_names: List of field names
+        :type field_names: list"""
         if isinstance(field_names, str):
             self._fields = [field_name.strip() for field_name in field_names.split(',')]
         else:
@@ -19,11 +40,24 @@ class namedarray:
         self._nfields = len(self._fields)
         self.dtype = np.dtype([(field_name, float) for field_name in self._fields])
 
+    def __repr__(self):
+        return '{}({})'.format(self.__class__.__name__, self._fields)
+
     def __call__(self, args):
+        """Convert a list or an array into  a :class:`numpy.recarray`
+
+        :param args: List or Array to be converted
+        :type args: iterable"""
+
         #print(self._fields, args)
         return np.asfarray(args).view(dtype = self.dtype).view(np.recarray)
 
     def convert(self, other):
+        """Convert a :class:`numpy.recarray` to a :class:`numpy.recarray` with additional fields, filling the additional fields with 0.
+
+        :param other: The :class:`numpy.recarray` to be converted.
+        :type other: :class:`numpy.recarray`"""
+
         a = self(np.zeros(self._nfields))
         if npvminor >= 13:
             a[other.dtype.names] = other
@@ -34,17 +68,37 @@ class namedarray:
         return a
 
 class StencilFlags(Enum):
+    """An enumeration representing various flags a Stencil can carry."""
+
     DIM2 = 0
+    """A stencil in two dimensions."""
+
     DIM3 = 1
+    """A stencil in three dimensions."""
+
     DIVFREE = 2
+    """A stencil that preserves :math:`\\operatorname{div}\\vec{B}=0`."""
+
     ISOTROPIC = 3
+    """A stencil that is the same on all axis."""
+
     CYLINDERSYM = 4
+    """A stencil that is the same on two out of three axes."""
+
     SYMMETRICBETA = 5
+    """A stencil with symmetric :math:`\\beta_{ij}`."""
 
 class Stencil(metaclass = ABCMeta):
+    """Parent class representing all Stencils"""
+
     Parameters = None
+    """:class:`namedarray` object representing the free parameters of the stencil"""
+
     Coefficients = None
+    """:class:`namedarray` object representing the actual coefficients of the stencil"""
+
     stencils = {}
+    """:class:`dict` that stores all :class:`Stencil` subclasses with its :class:`set` of flags"""
 
     def __init__(self):
         self._parameters = self.Coefficients._fields[:]
@@ -58,9 +112,15 @@ class Stencil(metaclass = ABCMeta):
 
     @property
     def dof(self):
+        """Read-only property giving the number of the degrees of freedom."""
         return len(self._parameters)
 
     def coefficients(self, args):
+        """Method that converts the given parameters into the stencil coefficients.
+
+        :param args: iterable of parameters
+        :type args: iterable
+        """
         c = self.Coefficients.convert(self.Parameters(args))
         self._fill_coefficients(c)
         return c
@@ -74,6 +134,11 @@ class Stencil(metaclass = ABCMeta):
 
     @classmethod
     def register_subclasses(cls, sub = None):
+        """This method will walk the tree of subclasses of :class:`Stencil` and fill :attr:`Stencil.stencils`.
+        This method runs recursively.
+
+        :param sub: Start from thus subclass
+        :type sub: :class:`Stencil`"""
         if sub is None:
             sub = cls
         for subclass in sub.__subclasses__():
@@ -82,6 +147,15 @@ class Stencil(metaclass = ABCMeta):
 
     @classmethod
     def get_stencil(cls, args):
+        """This method will do two things:
+
+        1. Interpret the given args in order to determine the set of flags that the user wants
+        2. Find and instantiate a :class:`Stencil` subclass that has the requested flags
+
+        :param args: Namespace object containing all the arguments.
+        :type args: namespace
+        :return: Object of a subclass of :class:`Stencil`
+        :rtype: :class:`Stencil`"""
         if cls.stencils == {}:
             cls.register_subclasses()
 
@@ -123,9 +197,12 @@ class Stencil(metaclass = ABCMeta):
 
 
 def get_stencil(args):
+    """Module level function that will call :func:`Stencil.get_stencil`."""
     return Stencil.get_stencil(args)
 
 class StencilFree2D(Stencil):
+    """Most general two-dimensional stencil"""
+
     Coefficients = namedarray("dt, alphax, alphay, betaxy, betayx, deltax, deltay")
     Flags = frozenset([StencilFlags.DIM2])
 
@@ -139,6 +216,8 @@ class StencilFree2D(Stencil):
 
 
 class StencilDivFree2D(StencilFree2D):
+    """Two dimensional stencil that preserves :math:`\\operatorname{div}\\vec{B}=0`."""
+
     Flags = StencilFree2D.Flags | frozenset([StencilFlags.DIVFREE])
 
     def _fixed_coefficients(self):
@@ -151,6 +230,8 @@ class StencilDivFree2D(StencilFree2D):
 
 
 class StencilSymmetric2D(StencilFree2D):
+    """Two dimensional stencil with symmetric :math:`\\beta_{ij}`."""
+
     Flags = StencilFree2D.Flags | frozenset([StencilFlags.SYMMETRICBETA])
 
     def _fixed_coefficients(self):
@@ -162,6 +243,8 @@ class StencilSymmetric2D(StencilFree2D):
 
 
 class StencilIsotropic2D(StencilSymmetric2D):
+    """A two dimensional stencil that is the same on all axis."""
+
     Flags = StencilSymmetric2D.Flags | frozenset([StencilFlags.ISOTROPIC])
 
     def _fixed_coefficients(self):
@@ -173,6 +256,7 @@ class StencilIsotropic2D(StencilSymmetric2D):
 
 
 class StencilIsotropicDivFree2D(StencilIsotropic2D, StencilDivFree2D):
+    """A two dimensional stencil that is the same on each axis and preserves :math:`\\operatorname{div}\\vec{B}=0`."""
     ### Note that the order of parent classes matters!
     ### MRO will call the inherited methods from left to right,
     ### setting delta_y = delta_x (Isotropic2D) first and than
@@ -183,6 +267,8 @@ class StencilIsotropicDivFree2D(StencilIsotropic2D, StencilDivFree2D):
 
 
 class StencilFree3D(Stencil):
+    """Most general three-dimensional stencil"""
+
     Coefficients = namedarray("dt, alphax, alphay, alphaz, betaxy, betaxz, betayx, betayz, betazx, betazy, deltax, deltay, deltaz")
     Flags = frozenset([StencilFlags.DIM3])
 
@@ -197,6 +283,8 @@ class StencilFree3D(Stencil):
 
 
 class StencilDivFree3D(StencilFree3D):
+    """Three dimensional stencil that preserves :math:`\\operatorname{div}\\vec{B}=0`."""
+
     Flags = StencilFree3D.Flags | frozenset([StencilFlags.DIVFREE])
 
     def _fixed_coefficients(self):
@@ -213,6 +301,8 @@ class StencilDivFree3D(StencilFree3D):
 
 
 class StencilSymmetric3D(StencilFree3D):
+    """Three dimensional stencil with symmetric :math:`\\beta_{ij}`."""
+
     Flags = StencilFree3D.Flags | frozenset([StencilFlags.SYMMETRICBETA])
 
     def _fixed_coefficients(self):
@@ -226,6 +316,8 @@ class StencilSymmetric3D(StencilFree3D):
 
 
 class StencilCylinder3D(StencilFree3D):
+    """Three dimensional stencil that is the same on two out of three axes."""
+
     Flags = StencilFree3D.Flags | frozenset([StencilFlags.CYLINDERSYM])
     def _fixed_coefficients(self):
         return super()._fixed_coefficients() + ['betayx', 'betayz', 'betazy', 'deltay']
@@ -239,6 +331,8 @@ class StencilCylinder3D(StencilFree3D):
 
 
 class StencilCylinderDivFree3D(StencilCylinder3D, StencilDivFree3D):
+    """Three dimensional stencil that is the same on two out of three axes and preserves :math:`\\operatorname{div}\\vec{B}=0`."""
+
     ### Note that the order of parent classes matters!
     ### MRO will call the inherited methods from left to right,
     ### setting delta_y = delta_x (Cylinder3D) first and than
@@ -247,6 +341,8 @@ class StencilCylinderDivFree3D(StencilCylinder3D, StencilDivFree3D):
 
 
 class StencilIsotropic3D(StencilSymmetric3D):
+    """Three dimensional stencil with symmetric :math:`\\beta_{ij}` that is the same on all axes."""
+
     Flags = StencilSymmetric3D.Flags | frozenset([StencilFlags.ISOTROPIC])
     def _fixed_coefficients(self):
         return super()._fixed_coefficients() + ['betaxz', 'betayz', 'deltay', 'deltaz']
@@ -260,6 +356,8 @@ class StencilIsotropic3D(StencilSymmetric3D):
 
 
 class StencilIsotropicDivFree3D(StencilIsotropic3D, StencilDivFree3D):
+    """Three dimensional stencil with symmetric :math:`\\beta_{ij}` that is the same on all axes and preserves :math:`\\operatorname{div}\\vec{B}=0`."""
+
     ### Note that the order of parent classes matters!
     ### MRO will call the inherited methods from left to right,
     ### setting delta_z = delta_y = delta_x (Isotropic3D) first and than
