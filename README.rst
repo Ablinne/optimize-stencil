@@ -33,7 +33,7 @@ Installation
 ------------
 
 The current version is available via https://github.com/hi-jena/optimize-stencil.
-The package and command line utilites are installed via the usual setup.py invocation.
+The package and command line utilites are installed via the usual setup.py invocation::
 
     git clone https://github.com/hi-jena/optimize-stencil
     ./setup.py install --user
