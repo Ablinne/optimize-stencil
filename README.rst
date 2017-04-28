@@ -32,17 +32,17 @@ The module :mod:`psutil` can be optionally used to find the number of physical c
 Installation
 ------------
 
-The current version is available via https://git.tpi.uni-jena.de/albn/optimize_stencil.
+The current version is available via https://github.com/hi-jena/optimize-stencil.
 The package and command line utilites are installed via the usual setup.py invocation.
 
-    git clone git@git.tpi.uni-jena.de:albn/optimize_stencil.git
+    git clone https://github.com/hi-jena/optimize-stencil
     ./setup.py install --user
 
 
 Documentation & API Reference
 -----------------------------
 
-The full documentation is maintained using Sphinx and can be built from the `doc` subdirectory of the project sources.
+The full documentation is maintained using Sphinx and can be found at http://optimize-stencil.readthedocs.io/en/latest/.
 
 
 Usage Example
