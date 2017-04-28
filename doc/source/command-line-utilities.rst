@@ -47,6 +47,9 @@ Find an optimal stencil in three dimensions for a uniform grid forcing identical
 
     ` optimize_stencil.py --dim 3 --Z 10 --Ngrid_low 30 --Ngrid_high 100`
 
+..  This is part of the Optimize Stencil Reference Manual.
+    Copyright (c) 2017 Alexander Blinne, David Schinkel
+
 Find an optimal stencil in three dimensions for a grid with non-square aspect ratio.
 Also reduce number of grid points to speed up calculations.
 This will take a few minutes even on a very fast machine.

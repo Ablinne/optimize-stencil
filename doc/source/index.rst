@@ -1,9 +1,8 @@
-.. Optimize Stencil documentation master file, created by
-   sphinx-quickstart on Tue Apr 25 15:21:15 2017.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
 
-Welcome to Optimize Stencil's documentation!
+..  This is part of the Optimize Stencil Reference Manual.
+    Copyright (c) 2017 Alexander Blinne, David Schinkel
+
+Optimize Stencil reference manual
 ============================================
 
 .. toctree::
@@ -19,6 +18,12 @@ Welcome to Optimize Stencil's documentation!
    code
 
 
+.. toctree::
+   :maxdepth: 1
+
+   fdl-1.3
+
+
 
 Indices and tables
 ==================
@@ -26,3 +31,16 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+
+License
+=======
+
+Copyright (c)  2017 Alexander Blinne, David Schinkel.
+
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.3
+or any later version published by the Free Software Foundation;
+with no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
+A copy of the license is included in the section entitled "GNU
+Free Documentation License".
