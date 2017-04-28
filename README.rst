@@ -13,7 +13,7 @@ More information can be found in the full documentation and our published resear
 Authors
 -------
 
-The original version of this program was written by David Schikel <schinkel.d@posteo.de>.
+The original version of this program was written by David Schinkel <schinkel.d@posteo.de>.
 The current version is maintained by Alexander Blinne <a.blinne@gsi.de>.
 
 
