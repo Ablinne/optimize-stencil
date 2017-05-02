@@ -89,6 +89,25 @@ class Optimize:
         self.dispersion.dt_multiplier = args.dt_multiplier
         self.dispersion_high.dt_multiplier = args.dt_multiplier
 
+        if args.weight == 'xaxis':
+            self.dispersion.w = np.zeros_like(self.dispersion.k)
+            self.dispersion_high.w = np.zeros_like(self.dispersion_high.k)
+
+            if self.dim == 2:
+                self.dispersion.w[:,0] = 1.0
+                self.dispersion_high.w[:,0] = 1.0
+            if self.dim == 3:
+                self.dispersion.w[:,0,0] = 1.0
+                self.dispersion_high.w[:,0,0] = 1.0
+        elif args.weight == 'xaxis_soft':
+            if self.dim == 2:
+                self.dispersion.w = np.exp(-(self.dispersion.ky/0.1)**2)
+                self.dispersion_high.w = np.exp(-(self.dispersion_high.ky/0.1)**2)
+            if self.dim == 3:
+                self.dispersion.w = np.exp(-(self.dispersion.ky/0.1)**2-(self.dispersion.kz/0.1)**2)
+                self.dispersion_high.w = np.exp(-(self.dispersion_high.ky/0.1)**2-(self.dispersion_high.kz/0.1)**2)
+
+
         self.constraints.append( dict(type='ineq', fun=self.dispersion.stencil_ok) )
         self.constraints.append( dict(type='ineq', fun=self.dispersion.dt_ok) )
         self.constraints_high.append( dict(type='ineq', fun=self.dispersion_high.stencil_ok) )

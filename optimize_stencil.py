@@ -31,19 +31,25 @@ def main():
 
     parser = argparse.ArgumentParser(description = "This script calculates the optimal coefficients for a FDTD stencil.")
     parser.add_argument("--N", default=3, type=int, help="Number of scan points for initial conditions in each coefficient (default: %(default)s).")
+
     parser.add_argument("--no-scan-dt", action='store_false', help="Do not scan through the allowed range of the time step for initial conditions and only use one starting value of 95%% of the CFL condition (default: %(default)s).")
     parser.set_defaults(scan_dt=True)
+
     parser.add_argument("--Ngrid_low", default=50, type=int, help="Gridsize for the fast calculation of the norm in the simplex algorithm (default: %(default)s).")
     parser.add_argument("--Ngrid_high", default=200, type=int, help="Gridsize for the accurate norm calculation after simplex  run (default: %(default)s).")
+
     parser.add_argument("--dim", default=2, type=int, choices=[2,3], help="Dimension of the stencil to be optimized (default: %(default)s).")
+
     parser.add_argument('--div-free', action='store_true', help="Constrain the derivative of div B == 0 (default: %(default)s).")
     parser.add_argument('--symmetric-axes', type=int, choices=[0,1,2], default=0, help="Define the count of axes of the stencil, that should be identical to another axis (default: %(default)s).")
     parser.add_argument('--symmetric', dest='symmetric_axes', action='store_const', const=1, help="Make sure the stencil has 1 symmetric axis, equivalent to --symmetric-axes 1")
     parser.add_argument('--no-symmetric', dest='symmetric_axes', action='store_const', const=0, help="Make sure all axes of the stencil are free, equivalent to --symmetric-axes 0")
     parser.add_argument('--no-symmetric-beta', dest='symmetric_beta', action='store_false', help="Do not demand that the beta coefficients should form a symmetric matrix. Warning: this will introduce spurious dimensions into the optimization problem and thus lead to unreproducible results.")
+
     parser.add_argument("--Y", default=1, type=float, help="Grid aspect ratio dy/dx (default: %(default)s).")
     parser.add_argument("--Z", default=1, type=float, help="Grid aspect ratio dz/dx (default: %(default)s).")
     parser.add_argument("--dt-multiplier", default=1.0, type=float, help="Multiplier to be applied to time step as returned by CFL condition (default: %(default)s).")
+
     parser.add_argument("--deltaxrange", default=[-1,0.25], nargs=2, type = float, metavar=('min', 'max'), help="Range of deltax (default: %(default)s).")
     parser.add_argument("--deltayrange", default=[-1,0.25], nargs=2, type = float, metavar=('min', 'max'), help="Range of deltay (default: %(default)s).")
     parser.add_argument("--deltazrange", default=[-1,0.25], nargs=2, type = float, metavar=('min', 'max'), help="Range of deltaz (default: %(default)s).")
@@ -54,6 +60,9 @@ def main():
     parser.add_argument("--betazxrange", default=[-1,1], nargs=2, type = float, metavar=('min', 'max'), help="Range of betazx (default: %(default)s).")
     parser.add_argument("--betazyrange", default=[-1,1], nargs=2, type = float, metavar=('min', 'max'), help="Range of betazy (default: %(default)s).")
     parser.add_argument("--dtrange", default=[0.1,1], nargs=2, type = float, metavar=('min', 'max'), help="Range of dt in units of dx (default: %(default)s).")
+
+    parser.add_argument("--weight", choices=['equal', 'xaxis', 'xaxis_soft'], default="equal", help="Choose weight function (default: %(default)s).")
+
     #parser.add_argument("--part", default=[1,1], nargs=2, type=int, metavar=("i", "n"), help="Only perform part i of a total of n parts, this is useful for a parallelization without the need to communicate between the different kernels (default: %(default)s).")
     parser.add_argument('--singlecore', action='store_true')
     parser.add_argument("--output", default="standard", choices=["standard", "array", "epoch"], help="Output format, 'standard' prints a list of the named coefficients, 'array' prints the returned array x as it is with [dt, beta{xyz}{xyz}, delta{xyz}, norm] and 'epoch' prints it compatible with the input decks of the EPOCH-Code.")
