@@ -43,6 +43,9 @@ class Dispersion(metaclass = ABCMeta):
     dx = 1.0
     """The step unit dx = 1.0. No need to change this, because the other dimensions are given in relation to dx."""
 
+    Y = 1.0
+    Z = 1.0
+
     dim = 0
     """The dimensionality of the Dispersion relation. Subclasses have dim=2 or dim=3."""
 
@@ -247,7 +250,7 @@ class Dispersion(metaclass = ABCMeta):
         #integrand & integration
         f = self.w*(omega - self.k)**2
         F = f.sum()
-        F = F*(np.pi/(self.N-1))**self.dim
+        F = F*(np.pi/(self.N-1))**self.dim * self.Y**2 * self.Z**2
 
         return F
 
