@@ -28,3 +28,10 @@ Module extended_stencil.stencil
    :members:
    :undoc-members:
 
+Module extended_stencil.weight
+----------------------------------
+
+.. automodule:: extended_stencil.weight
+   :members:
+   :undoc-members:
+
