@@ -32,7 +32,7 @@ def main():
     parser = argparse.ArgumentParser(description = "This script calculates the optimal coefficients for a FDTD stencil.")
     parser.add_argument("--N", default=3, type=int, help="Number of scan points for initial conditions in each coefficient (default: %(default)s).")
 
-    parser.add_argument("--no-scan-dt", action='store_false', help="Do not scan through the allowed range of the time step for initial conditions and only use one starting value of 95%% of the CFL condition (default: %(default)s).")
+    parser.add_argument("--no-scan-dt", action='store_false', dest='scan_dt', help="Do not scan through the allowed range of the time step for initial conditions and only use one starting value of 95%% of the CFL condition (default: %(default)s).")
     parser.set_defaults(scan_dt=True)
 
     parser.add_argument("--Ngrid_low", default=50, type=int, help="Gridsize for the fast calculation of the norm in the simplex algorithm (default: %(default)s).")
