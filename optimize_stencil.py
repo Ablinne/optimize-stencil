@@ -62,6 +62,7 @@ def main():
     parser.add_argument("--dtrange", default=[0.1,1], nargs=2, type = float, metavar=('min', 'max'), help="Range of dt in units of dx (default: %(default)s).")
 
     parser.add_argument("--weight", choices=['equal', 'xaxis', 'xaxis_soft'], default="equal", help="Choose weight function (default: %(default)s).")
+    parser.add_argument("--weight-params", nargs='*', type = float, help="Parameters for weight function.", default = [])
 
     #parser.add_argument("--part", default=[1,1], nargs=2, type=int, metavar=("i", "n"), help="Only perform part i of a total of n parts, this is useful for a parallelization without the need to communicate between the different kernels (default: %(default)s).")
     parser.add_argument('--singlecore', action='store_true')

@@ -38,7 +38,7 @@ class Dispersion(metaclass = ABCMeta):
 
     #weight function
     w = 1.0
-    """The weight function. In this version w=1."""
+    """The weight function."""
 
     dx = 1.0
     """The step unit dx = 1.0. No need to change this, because the other dimensions are given in relation to dx."""

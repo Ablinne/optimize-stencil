@@ -26,3 +26,4 @@ def minmax(arr):
 from extended_stencil.stencil import *
 from extended_stencil.dispersion import *
 from extended_stencil.optimize import *
+from extended_stencil.weight import weight_functions

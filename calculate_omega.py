@@ -45,6 +45,10 @@ def main():
     parser.add_argument("--yee", action='store_const', dest='type', const='yee')
     parser.add_argument("--pukhov", action='store_const', dest='type', const='pukhov')
     parser.set_defaults(type="free")
+
+    parser.add_argument("--weight", choices=['equal', 'xaxis', 'xaxis_soft'], default="equal", help="Choose weight function (default: %(default)s).")
+    parser.add_argument("--weight-params", nargs='*', type = float, help="Parameters for weight function.", default = [])
+
     parser.add_argument("--output", default="standard", choices=["standard", "array", "epoch"], help="Output format, 'standard' prints a list of the named coefficients, 'array' prints the returned array x as it is with [dt, beta{xyz}{xyz}, delta{xyz}, norm] and 'epoch' prints it compatible with the input decks of the EPOCH-Code.")
     parser.add_argument("--write-omega", default = None, help="Write omega to file OUTFILE", metavar="OUTFILE")
     args = parser.parse_args()
@@ -69,6 +73,10 @@ def main():
         dispersion = Dispersion2D(args.Y, args.Ngrid_high, stencil)
     elif args.dim == 3:
         dispersion = Dispersion3D(args.Y, args.Z, args.Ngrid_high, stencil)
+
+    if args.weight in weight_functions:
+            set_weight = weight_functions[args.weight](*args.weight_params)
+            set_weight(dispersion)
 
     dispersion.dt_multiplier = args.dt_multiplier
 
