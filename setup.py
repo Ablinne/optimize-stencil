@@ -30,5 +30,6 @@ setup(name='OptimizeStencil',
       packages=['extended_stencil'],
       scripts=['optimize_stencil.py', 'calculate_omega.py'],
       install_requires=['numpy', 'scipy'],
-      extras_require= { 'CountPhysicalCores': ['psutil'] }
+      extras_require= { 'CountPhysicalCores': ['psutil'] },
+      test_suite = 'nose.collector'
      )

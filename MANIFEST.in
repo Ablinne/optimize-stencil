@@ -1,2 +1,6 @@
 include versioneer.py
 include extended_stencil/_version.py
+include README.rst
+include COPYING
+include doc/Makefile
+include doc/source/*
