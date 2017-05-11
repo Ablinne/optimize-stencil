@@ -25,6 +25,7 @@ import numpy as np
 import argparse
 import itertools
 
+import extended_stencil
 from extended_stencil import Optimize
 
 def main():
@@ -68,7 +69,13 @@ def main():
     parser.add_argument('--singlecore', action='store_true')
     parser.add_argument("--output", default="standard", choices=["standard", "array", "epoch"], help="Output format, 'standard' prints a list of the named coefficients, 'array' prints the returned array x as it is with [dt, beta{xyz}{xyz}, delta{xyz}, norm] and 'epoch' prints it compatible with the input decks of the EPOCH-Code.")
     parser.add_argument("--write-omega", default = None, help="Write omega to file OUTFILE", metavar="OUTFILE")
+    parser.add_argument("-v", "--version", action="store_true")
     args = parser.parse_args()
+
+    if args.version:
+        print('optimize_stencil.py {}'.format(extended_stencil.__version__))
+        sys.exit(0)
+
     print('Arguments are:', args)
     print('Starting Optimization.')
     #sys.exit()
@@ -88,10 +95,26 @@ def main():
     if(args.output=='array'):
         print([*coefficients[0], fmin])
     if(args.output=='epoch'):
-        print("norm=", fmin, "\n")
-        print("\tmaxwell_solver=free")
+        print("norm=", fmin, "\n\n")
+        print("begin:control\n")
+        print("\t[ ... your regular control block content ... ]\n")
+        print("\tmaxwell_solver = custom")
+        print("\tdt_multiplier = 1\n")
+        print("end:control\n\n")
+        print("begin:stencil\n")
+        print("\t# These coefficients have been calculated using")
+        print("\t# optimize_stencil.py {}".format(extended_stencil.__version__))
+        print("\t# with arguments '{}'".format(" ".join(sys.argv[1:])))
+        print()
         for item in zip(opt.stencil.Coefficients._fields, coefficients[0]):
-            print('\tstencil_{}={}'.format(*item))
+            if item[0].startswith('alpha'):
+                continue
+            if item[0] == "dt":
+                print('\t{} = {} * dx / c'.format(*item))
+            else:
+                print('\t{} = {}'.format(*item))
+        print()
+        print("end:stencil")
     if args.write_omega:
         opt.omega_output(args.write_omega, x)
 
