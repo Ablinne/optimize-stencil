@@ -19,6 +19,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
+import shlex
 
 import scipy.optimize as scop
 import numpy as np
@@ -104,7 +105,7 @@ def main():
         print("begin:stencil\n")
         print("\t# These coefficients have been calculated using")
         print("\t# optimize_stencil.py {}".format(extended_stencil.__version__))
-        print("\t# with arguments '{}'".format(" ".join(sys.argv[1:])))
+        print("\t# with arguments \"{}\"".format(" ".join(map(shlex.quote, sys.argv[1:]))))
         print()
         for item in zip(opt.stencil.Coefficients._fields, coefficients[0]):
             if item[0].startswith('alpha'):
