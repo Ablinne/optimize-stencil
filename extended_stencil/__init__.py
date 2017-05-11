@@ -27,3 +27,7 @@ from extended_stencil.stencil import *
 from extended_stencil.dispersion import *
 from extended_stencil.optimize import *
 from extended_stencil.weight import weight_functions
+
+from ._version import get_versions
+__version__ = get_versions()['version']
+del get_versions

@@ -18,9 +18,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from setuptools import setup
+import versioneer
 
 setup(name='OptimizeStencil',
-      version='0.1',
+      version=versioneer.get_version(),
+      cmdclass=versioneer.get_cmdclass(),
       description='Optimize stencils for extended Maxwell Solvers',
       author='Alexander Blinne, David Schinkel',
       author_email='alexander@blinne.net',

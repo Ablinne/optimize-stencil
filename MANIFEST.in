@@ -1,0 +1,2 @@
+include versioneer.py
+include extended_stencil/_version.py
