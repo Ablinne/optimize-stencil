@@ -68,7 +68,6 @@ def main():
 
     #parser.add_argument("--part", default=[1,1], nargs=2, type=int, metavar=("i", "n"), help="Only perform part i of a total of n parts, this is useful for a parallelization without the need to communicate between the different kernels (default: %(default)s).")
     parser.add_argument('--singlecore', action='store_true')
-    parser.add_argument("--output", default="standard", choices=["standard", "array", "epoch"], help="Output format, 'standard' prints a list of the named coefficients, 'array' prints the returned array x as it is with [dt, beta{xyz}{xyz}, delta{xyz}, norm] and 'epoch' prints it compatible with the input decks of the EPOCH-Code.")
     parser.add_argument("--write-omega", default = None, help="Write omega to file OUTFILE", metavar="OUTFILE")
     parser.add_argument("-v", "--version", action="store_true")
     args = parser.parse_args()
@@ -85,37 +84,35 @@ def main():
     x, fmin = opt.optimize()
     coefficients = opt.stencil.coefficients(x)
 
-    print('\nOptimization finished. Results:')
+    print('\nOptimization finished. Results:\n')
+    print("norm=", fmin)
+    print('stencil_ok=', opt.dispersion_high.stencil_ok(x))
+    print('dt_ok=', opt.dispersion_high.dt_ok(x))
 
-    if(args.output=='standard'):
-        print("norm=", fmin, "\n")
-        print('stencil_ok=', opt.dispersion_high.stencil_ok(x))
-        print('dt_ok=', opt.dispersion_high.dt_ok(x))
-        for item in zip(opt.stencil.Coefficients._fields, coefficients[0]):
-            print('{}={}'.format(*item))
-    if(args.output=='array'):
-        print([*coefficients[0], fmin])
-    if(args.output=='epoch'):
-        print("norm=", fmin, "\n\n")
-        print("begin:control\n")
-        print("\t[ ... your regular control block content ... ]\n")
-        print("\tmaxwell_solver = custom")
-        print("\tdt_multiplier = 1\n")
-        print("end:control\n\n")
-        print("begin:stencil\n")
-        print("\t# These coefficients have been calculated using")
-        print("\t# optimize_stencil.py {}".format(extended_stencil.__version__))
-        print("\t# with arguments \"{}\"".format(" ".join(map(shlex.quote, sys.argv[1:]))))
-        print()
-        for item in zip(opt.stencil.Coefficients._fields, coefficients[0]):
-            if item[0].startswith('alpha'):
-                continue
-            if item[0] == "dt":
-                print('\t{} = {} * dx / c'.format(*item))
-            else:
-                print('\t{} = {}'.format(*item))
-        print()
-        print("end:stencil")
+    print("\n\n\n * Please include the following in your input.deck: *\n\n")
+
+    print("begin:control\n")
+    print("    [ ... your regular control block content ... ]\n")
+    print("    maxwell_solver = custom")
+    print("    dt_multiplier = 1\n")
+    print("end:control\n\n")
+    print("begin:stencil\n")
+    print("    # These coefficients have been calculated with")
+    print("    # optimize_stencil.py version {}".format(extended_stencil.__version__))
+    print()
+    print("    # using the command line")
+    print("    # \"optimize_stencil.py {}\"".format(" ".join(map(shlex.quote, sys.argv[1:]))))
+    print()
+    for item in zip(opt.stencil.Coefficients._fields, coefficients[0]):
+        if item[0].startswith('alpha'):
+            continue
+        if item[0] == "dt":
+            print('    {} = {} * dx / c'.format(*item))
+        else:
+            print('    {} = {}'.format(*item))
+    print()
+    print("end:stencil\n")
+
     if args.write_omega:
         opt.omega_output(args.write_omega, x)
 
