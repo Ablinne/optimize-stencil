@@ -51,6 +51,11 @@ def main():
 
     parser.add_argument("--output", default="standard", choices=["standard", "array", "epoch"], help="Output format, 'standard' prints a list of the named coefficients, 'array' prints the returned array x as it is with [dt, beta{xyz}{xyz}, delta{xyz}, norm] and 'epoch' prints it compatible with the input decks of the EPOCH-Code.")
     parser.add_argument("--write-omega", default = None, help="Write omega to file OUTFILE", metavar="OUTFILE")
+
+    parser.add_argument("--physical-dx", type=float, help="Physical dx value for group/phase velocity calculations", default=None)
+    parser.add_argument("--laser-wavelength", type=float, help="Calculate phase and group velocity for given wavelength", default=None)
+    parser.add_argument("--laser-direction", nargs='*', type=float, help="Point laser in this direction (vector normalized automatically)", default=None)
+
     args = parser.parse_args()
     print(args)
     #sys.exit()
@@ -132,6 +137,49 @@ def main():
         print("\tmaxwell_solver=free")
         for item in zip(stencil.Coefficients._fields, coefficients[0]):
             print('\tstencil_{}={}'.format(*item))
+
+
+    if args.laser_wavelength:
+        if not args.physical_dx:
+            print("To calculate dispersion at specified laser wavelength/k vector please give --physical-dx")
+            sys.exit(1)
+
+
+        if args.dim == 2:
+            omega_spline = dispersion.omega_spline(x)
+
+            def vph_vg(k):
+                kx, ky = k
+                kabs = np.sqrt(kx**2 + ky**2)
+                vph = omega_spline(*k)/kabs
+
+                vgx = omega_spline(*k, dx=1)
+                vgy = omega_spline(*k, dy=1)
+                vg = np.sqrt(vgx**2 + vgy**2)
+                return map(np.asscalar, (vph, vg))
+
+        if args.dim == 3:
+            omega_interp, vg_interp = dispersion.omega_interp(x)
+
+            def vph_vg(k):
+                kx, ky, kz = k
+                kabs = np.sqrt(kx**2 + ky**2 + kz**2)
+                vph = omega_interp(k)/kabs
+
+                vg = vg_interp(k)
+                return map(np.asscalar, (vph, vg))
+
+        kl = np.zeros(args.dim)
+        if args.laser_direction:
+            kl[:] = args.laser_direction
+            kl /= np.sqrt(np.sum(kl*kl))
+        else:
+            kl[0] = 1
+        kl *= 2*np.pi/args.laser_wavelength*args.physical_dx
+        vph, vg = vph_vg(kl)
+        print("Specified laser wavelength lambda={} dx leads to vph={} c and vg={} c.".format(args.laser_wavelength/args.physical_dx, vph, vg))
+
+
     if args.write_omega:
         dispersion.omega_output(args.write_omega, x)
 

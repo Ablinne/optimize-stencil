@@ -319,6 +319,9 @@ class Dispersion2D(Dispersion):
             self._sqrtarg = Ax*self.sx2/(dx**2) + Ay*self.sy2/((self.Y * dx)**2)
         return self._sqrtarg
 
+    def omega_spline(self, parameters, s=0):
+        omega = self.omega(parameters)
+        return spinterp.RectBivariateSpline(self.kx[:,0], self.ky[0,:], omega, s=s)
 
 
 class Dispersion3D(Dispersion):
@@ -394,3 +397,17 @@ class Dispersion3D(Dispersion):
 
             self._sqrtarg = Ax*self.sx2/(dx**2) + Ay*self.sy2/((self.Y*  dx)**2) + Az*self.sz2/((self.Z * dx)**2)
         return self._sqrtarg
+
+
+    def omega_interp(self, parameters):
+        omega = self.omega(parameters)
+        kappa = self.kappamesh
+        kx, ky, kz = kmesh = self.kmesh
+        k = self.k
+        #print(omega, self.dks)
+        vgs = np.gradient(omega, *self.dks, edge_order=2)
+        vg = np.sqrt(sum(vgc**2 for vgc in vgs))
+        vg[:3,:3,:3] = 1
+        omega_interp = spinterp.RegularGridInterpolator((kx[:,0,0], ky[0,:,0], kz[0,0,:]), omega)
+        vph_interp = spinterp.RegularGridInterpolator((kx[:,0,0], ky[0,:,0], kz[0,0,:]), vg)
+        return omega_interp, vph_interp
