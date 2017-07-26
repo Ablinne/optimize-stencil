@@ -25,7 +25,7 @@ import numpy as np
 from numpy.version import version as npver
 
 
-npvmajor, npvminor, npvbugfix = [int(x) for x in npver.split('.')]
+npv = tuple(int(x) for x in npver.split('.'))
 
 class namedarray:
     """Class representing a set of field names such that any list or array of numbers can be casted into a :class:`numpy.recarray`"""
@@ -59,12 +59,15 @@ class namedarray:
         :type other: :class:`numpy.recarray`"""
 
         a = self(np.zeros(self._nfields))
-        if npvminor >= 13:
+        if npv < (1,13,0):
             a[other.dtype.names] = other
-        else:
+        elif npv < (1,14,0):
             with warnings.catch_warnings():
                 warnings.simplefilter('ignore', FutureWarning)
                 a[:] = other
+        else:
+            for field_name in self._fields:
+                a[field_name] = other[field_name]
         return a
 
 class StencilFlags(Enum):
