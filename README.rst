@@ -42,7 +42,7 @@ The package and command line utilites are installed via the usual setup.py invoc
 Documentation & API Reference
 -----------------------------
 
-The full documentation is maintained using Sphinx and can be found at http://optimize-stencil.readthedocs.io/en/latest/.
+The full documentation is maintained using Sphinx and can be found at http://optimize-stencil.readthedocs.io/en/latest/. The corresponding research article can be found at https://arxiv.org/abs/1710.06829.
 
 
 Usage Example
@@ -88,4 +88,3 @@ Contributors
 ------------
 
 If you have problems let me know at https://github.com/Ablinne/optimize-stencil/issues.
-
