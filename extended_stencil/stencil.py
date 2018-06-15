@@ -66,7 +66,7 @@ class namedarray:
                 warnings.simplefilter('ignore', FutureWarning)
                 a[:] = other
         else:
-            for field_name in self._fields:
+            for field_name in other.dtype.names:
                 a[field_name] = other[field_name]
         return a
 
